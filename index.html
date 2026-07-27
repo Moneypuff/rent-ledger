@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rent Ledger</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    --paper:#FAF6EF; --paper-raised:#FFFFFF; --ink:#211D17; --ink-soft:#726A5B; --ink-faint:#A69C89;
+    --line:#E7DFCF; --line-strong:#D7CBB3; --accent:#2F5D50; --accent-strong:#1F473C; --accent-soft:#E1EAE3;
+    --good:#2F7A46; --good-soft:#E3F1E6; --warn:#AD7817; --warn-soft:#FBEEDA; --bad:#B23A2E; --bad-soft:#FBE7E3;
+    --shadow: 0 1px 2px rgba(33,29,23,0.06), 0 4px 14px rgba(33,29,23,0.05);
+    --radius: 10px;
+    --serif: ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#161409; --paper-raised:#1F1C13; --ink:#F1EAD8; --ink-soft:#B7AC93; --ink-faint:#7C7360;
+      --line:#332E20; --line-strong:#453E29; --accent:#7BB09C; --accent-strong:#9FCAB8; --accent-soft:#20342C;
+      --good:#5FB577; --good-soft:#1E3324; --warn:#E0A94A; --warn-soft:#3A2C14; --bad:#E2685A; --bad-soft:#3A211D;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 14px rgba(0,0,0,0.25);
+    }
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper); color:var(--ink); font-family:var(--sans);
+    -webkit-font-smoothing:antialiased; min-height:100vh;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+  h1,h2,h3{font-family:var(--serif); font-weight:600; margin:0;}
+  .num{ font-variant-numeric:tabular-nums; font-family:var(--serif); }
+  button{ font-family:var(--sans); }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  .topbar{
+    position:sticky; top:0; z-index:20; background:var(--paper); border-bottom:1px solid var(--line);
+    padding: max(14px, env(safe-area-inset-top)) 18px 12px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .brand{ font-size:1.25rem; }
+  .brand .accent-dot{ color:var(--accent); }
+  .topbar-right{ display:flex; align-items:center; gap:8px; }
+  .month-pill{
+    font-size:0.72rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--accent-strong); background:var(--accent-soft); border-radius:999px; padding:5px 11px; white-space:nowrap;
+  }
+  .icon-btn{
+    background:none; border:1px solid var(--line-strong); border-radius:8px; width:32px; height:32px;
+    display:flex; align-items:center; justify-content:center; color:var(--ink-soft); cursor:pointer;
+  }
+  .icon-btn svg{ width:16px; height:16px; }
+
+  .banner{
+    margin:12px 18px 0; padding:12px 14px; border-radius:var(--radius);
+    font-size:0.88rem; display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
+  }
+  .banner.info{ background:var(--accent-soft); color:var(--accent-strong); border:1px solid var(--line-strong); }
+  .banner.error{ background:var(--bad-soft); color:var(--bad); border:1px solid var(--bad); }
+  .banner button{ background:none; border:none; color:inherit; font-size:1rem; line-height:1; cursor:pointer; }
+
+  main{ padding: 16px 18px 40px; max-width:760px; margin:0 auto; }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  .stats{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
+  @media (min-width:560px){ .stats{ grid-template-columns:repeat(4,1fr); } }
+  .stat{ background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; box-shadow:var(--shadow); }
+  .stat .label{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-soft); }
+  .stat .value{ font-size:1.5rem; margin-top:3px; }
+  .stat .value.good{ color:var(--good); }
+  .stat .value.bad{ color:var(--bad); }
+
+  .chiprow{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px; }
+  .chip{ font-size:0.76rem; font-weight:600; border-radius:999px; padding:5px 11px; display:inline-flex; align-items:center; gap:6px; }
+  .chip.paid{ background:var(--good-soft); color:var(--good); }
+  .chip.partial, .chip.late{ background:var(--warn-soft); color:var(--warn); }
+  .chip.unpaid{ background:var(--bad-soft); color:var(--bad); }
+  .chip .dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+  .section-head{ display:flex; align-items:center; gap:10px; margin: 26px 0 12px; }
+  .section-head h2{ font-size:1.05rem; }
+  .section-head .rule{ flex:1; height:1px; background:var(--line-strong); }
+  .section-head .count{ font-size:0.78rem; color:var(--ink-faint); }
+
+  .tcard{ background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin-bottom:12px; box-shadow:var(--shadow); }
+  .tcard-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .tcard-name{ font-size:1.05rem; }
+  .tcard-unit{ font-size:0.82rem; color:var(--ink-soft); margin-top:1px; }
+  .tcard-expected{ text-align:right; }
+  .tcard-expected .amt{ font-size:1.15rem; }
+  .tcard-expected .breakdown{ font-size:0.72rem; color:var(--ink-faint); margin-top:1px; }
+
+  .field-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  .field{ display:flex; flex-direction:column; gap:4px; }
+  .field.full{ grid-column:1/-1; }
+  .field label{ font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); }
+  input, select, textarea{
+    font-family:var(--sans); font-size:0.95rem; color:var(--ink); background:var(--paper);
+    border:1px solid var(--line-strong); border-radius:7px; padding:8px 9px; width:100%;
+  }
+  input[type="number"]{ font-family:var(--serif); font-variant-numeric:tabular-nums; }
+  textarea{ resize:vertical; min-height:44px; font-family:var(--sans); }
+  input:focus, select:focus, textarea:focus{ border-color:var(--accent); }
+  .status-select.st-paid{ color:var(--good); border-color:var(--good); }
+  .status-select.st-partial, .status-select.st-late{ color:var(--warn); border-color:var(--warn); }
+  .status-select.st-unpaid{ color:var(--bad); border-color:var(--bad); }
+
+  .save-row{ display:flex; justify-content:flex-end; margin-top:8px; }
+  .save-state{ font-size:0.74rem; color:var(--ink-faint); display:flex; align-items:center; gap:5px; }
+  .save-state.saved{ color:var(--good); }
+  .save-state.error{ color:var(--bad); }
+
+  .btn{ font-size:0.88rem; font-weight:600; border-radius:8px; padding:10px 16px; border:1px solid var(--line-strong); background:var(--paper-raised); color:var(--ink); cursor:pointer; }
+  .btn:hover{ border-color:var(--accent); }
+  .btn.primary{ background:var(--accent); border-color:var(--accent); color:var(--paper-raised); }
+  .btn.small{ font-size:0.78rem; padding:6px 11px; }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+
+  .month-entry{ background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:12px; box-shadow:var(--shadow); overflow:hidden; }
+  .month-entry summary{ list-style:none; cursor:pointer; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .month-entry summary::-webkit-details-marker{ display:none; }
+  .month-entry summary .m-title{ font-size:1rem; }
+  .month-entry summary .m-sub{ font-size:0.78rem; color:var(--ink-soft); margin-top:2px; }
+  .month-entry .m-rate{ font-size:1.05rem; white-space:nowrap; }
+  .month-entry .m-body{ padding:0 16px 16px; border-top:1px solid var(--line); }
+  .table-wrap{ overflow-x:auto; margin-top:10px; }
+  table{ border-collapse:collapse; width:100%; font-size:0.84rem; min-width:520px; }
+  th,td{ text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); font-weight:600; }
+  td.comment{ white-space:normal; min-width:160px; color:var(--ink-soft); }
+  td.amt{ font-family:var(--serif); font-variant-numeric:tabular-nums; }
+  .empty{ color:var(--ink-faint); font-size:0.9rem; padding:20px 4px; text-align:center; }
+
+  .tabbar{ position:fixed; bottom:0; left:0; right:0; z-index:30; background:var(--paper-raised); border-top:1px solid var(--line); display:flex; padding-bottom:env(safe-area-inset-bottom); }
+  .tabbtn{ flex:1; background:none; border:none; padding:10px 4px 8px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--ink-faint); }
+  .tabbtn svg{ width:22px; height:22px; }
+  .tabbtn span{ font-size:0.68rem; font-weight:600; letter-spacing:0.02em; }
+  .tabbtn.active{ color:var(--accent); }
+
+  .hint{ font-size:0.78rem; color:var(--ink-faint); margin-top:6px; }
+
+  /* Connect overlay */
+  .connect-overlay{ position:fixed; inset:0; background:var(--paper); z-index:60; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .connect-overlay.hidden{ display:none; }
+  .connect-card{ max-width:420px; width:100%; }
+  .connect-card h1{ font-size:1.4rem; margin-bottom:6px; }
+  .connect-card p{ font-size:0.9rem; color:var(--ink-soft); line-height:1.5; }
+  .connect-card .field{ margin-top:14px; }
+
+  .spinner-wrap{ display:flex; justify-content:center; padding:40px 0; color:var(--ink-faint); font-size:0.9rem; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1 class="brand">Rent<span class="accent-dot">·</span>Ledger</h1>
+  <div class="topbar-right">
+    <span class="month-pill" id="monthPill">—</span>
+    <button class="icon-btn" id="refreshBtn" title="Refresh" aria-label="Refresh">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 0 1 15.3-6.4M21 12a9 9 0 0 1-15.3 6.4"/><path d="M18 3v5h-5M6 21v-5h5"/></svg>
+    </button>
+    <button class="icon-btn" id="settingsBtn" title="Connection settings" aria-label="Connection settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.6 1z"/></svg>
+    </button>
+  </div>
+</div>
+
+<div id="bannerRegion"></div>
+
+<main>
+  <section class="panel active" id="panel-collect">
+    <div id="collectContent"><div class="spinner-wrap">Loading…</div></div>
+  </section>
+
+  <section class="panel" id="panel-history">
+    <div class="section-head" style="margin-top:4px;"><h2>Closed months</h2><div class="rule"></div></div>
+    <div id="historyList"><div class="spinner-wrap">Loading…</div></div>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button class="tabbtn active" data-tab="collect">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 3v3M16 3v3M7 13h4M7 17h7"/></svg>
+    <span>Collect</span>
+  </button>
+  <button class="tabbtn" data-tab="history">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg>
+    <span>History</span>
+  </button>
+</nav>
+
+<div class="connect-overlay hidden" id="connectOverlay">
+  <div class="connect-card">
+    <h1>Connect your ledger</h1>
+    <p>Paste the Apps Script Web App URL and the shared secret from <code>setup()</code>'s log (see the README). Stored only in this browser, never sent anywhere else.</p>
+    <form id="connectForm">
+      <div class="field"><label for="apiUrlInput">Web App URL</label><input type="url" id="apiUrlInput" placeholder="https://script.google.com/macros/s/.../exec" required></div>
+      <div class="field"><label for="tokenInput">Shared secret</label><input type="text" id="tokenInput" required></div>
+      <div class="btn-row"><button type="submit" class="btn primary">Connect</button></div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var LS_URL = "rentLedger.apiUrl";
+  var LS_TOKEN = "rentLedger.token";
+  var fmt = new Intl.NumberFormat("en-CA", { style:"currency", currency:"CAD" });
+  var pct = function(n){ return (Math.round(n*10)/10).toString() + "%"; };
+  var $ = function(id){ return document.getElementById(id); };
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function monthLabel(mk){
+    var parts = mk.split("-"); var y = parseInt(parts[0],10); var m = parseInt(parts[1],10)-1;
+    var names = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    return names[m] + " " + y;
+  }
+  function currentMonthKey(){
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+  }
+  function statusLabel(s){ return { paid:"Paid", partial:"Partial", late:"Late", unpaid:"Unpaid" }[s] || s; }
+  function suggestStatus(expected, collected){
+    if(expected <= 0) return collected > 0 ? "paid" : "unpaid";
+    if(collected >= expected - 0.005) return "paid";
+    if(collected > 0) return "partial";
+    return "unpaid";
+  }
+
+  function apiUrl(){ return localStorage.getItem(LS_URL) || ""; }
+  function token(){ return localStorage.getItem(LS_TOKEN) || ""; }
+  function configured(){ return !!apiUrl() && !!token(); }
+
+  var latestData = null;
+  var rowState = {}; // key -> {collected, datePaid, method, status, statusManual, comment}
+  var saveTimers = {};
+
+  function keyFor(name, unit){ return name + "::" + unit; }
+
+  function showBanner(kind, message, opts){
+    var region = $("bannerRegion");
+    var dismissable = !opts || opts.dismissable !== false;
+    region.innerHTML =
+      '<div class="banner ' + kind + '"><span>' + message + '</span>' +
+      (dismissable ? '<button aria-label="Dismiss">&times;</button>' : '') + '</div>';
+    if(dismissable){
+      region.querySelector("button").addEventListener("click", function(){ region.innerHTML = ""; });
+    }
+  }
+  function clearBanner(){ $("bannerRegion").innerHTML = ""; }
+
+  async function apiGet(month){
+    var url = apiUrl() + "?token=" + encodeURIComponent(token()) + "&month=" + encodeURIComponent(month);
+    var res = await fetch(url);
+    if(!res.ok) throw new Error("Network error (" + res.status + ")");
+    var data = await res.json();
+    if(data.error) throw new Error(data.error === "unauthorized" ? "Shared secret rejected — check Settings." : data.error);
+    return data;
+  }
+
+  async function apiPost(payload){
+    var res = await fetch(apiUrl(), {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(Object.assign({ token: token() }, payload))
+    });
+    if(!res.ok) throw new Error("Network error (" + res.status + ")");
+    var data = await res.json();
+    if(data.error) throw new Error(data.error);
+    return data;
+  }
+
+  function totalsFor(rows){
+    var expected=0, collected=0, paid=0, partial=0, late=0, unpaid=0;
+    rows.forEach(function(r){
+      expected += Number(r.expected != null ? r.expected : r.Expected) || 0;
+      collected += Number(r.collected != null ? r.collected : r.Collected) || 0;
+      var st = (r.status || r.Status || "unpaid").toLowerCase();
+      if(st==="paid") paid++; else if(st==="partial") partial++; else if(st==="late") late++; else unpaid++;
+    });
+    var rate = expected > 0 ? (collected/expected*100) : (rows.length===0 ? 0 : 100);
+    return { expected:expected, collected:collected, outstanding:expected-collected, rate:rate, paid:paid, partial:partial, late:late, unpaid:unpaid };
+  }
+
+  function tenantCardHtml(t){
+    var key = keyFor(t.name, t.unit);
+    var r = rowState[key];
+    var breakdown = t.type === "commercial"
+      ? "Base " + fmt.format(t.baseRent) + " + tax " + fmt.format(t.expected - t.baseRent)
+      : "No tax (residential)";
+    return (
+      '<div class="tcard" data-key="' + encodeURIComponent(key) + '">' +
+        '<div class="tcard-head">' +
+          '<div><div class="tcard-name">' + escapeHtml(t.name || "(unnamed)") + '</div><div class="tcard-unit">' + escapeHtml(t.unit||"") + '</div></div>' +
+          '<div class="tcard-expected"><div class="amt num">' + fmt.format(t.expected) + '</div><div class="breakdown">' + breakdown + '</div></div>' +
+        '</div>' +
+        '<div class="field-grid">' +
+          '<div class="field"><label>Amount collected ($)</label><input type="number" step="0.01" min="0" class="in-collected" value="' + r.collected + '"></div>' +
+          '<div class="field"><label>Date paid</label><input type="date" class="in-date" value="' + (r.datePaid||"") + '"></div>' +
+          '<div class="field"><label>Method</label><select class="in-method">' +
+            ["", "E-transfer","Cheque","Cash","Direct deposit","Other"].map(function(m){
+              return '<option value="' + m + '"' + (r.method===m?" selected":"") + '>' + (m===""?"—":m) + '</option>';
+            }).join("") +
+          '</select></div>' +
+          '<div class="field"><label>Status</label><select class="in-status status-select st-' + r.status + '">' +
+            ["paid","partial","late","unpaid"].map(function(s){
+              return '<option value="' + s + '"' + (r.status===s?" selected":"") + '>' + statusLabel(s) + '</option>';
+            }).join("") +
+          '</select></div>' +
+          '<div class="field full"><label>Comment — reason for late / partial / non-payment</label>' +
+            '<textarea class="in-comment" placeholder="Optional note, e.g. tenant reported layoff, promised payment by the 15th...">' + escapeHtml(r.comment||"") + '</textarea></div>' +
+        '</div>' +
+        '<div class="save-row"><span class="save-state" data-key="' + encodeURIComponent(key) + '"></span></div>' +
+      '</div>'
+    );
+  }
+
+  function renderCollect(){
+    var content = $("collectContent");
+    var tenants = latestData.tenants || [];
+    var residential = tenants.filter(function(t){ return t.type === "residential"; });
+    var commercial = tenants.filter(function(t){ return t.type === "commercial"; });
+
+    var rows = tenants.map(function(t){ return Object.assign({}, rowState[keyFor(t.name,t.unit)], {expected:t.expected}); });
+    var totals = totalsFor(rows);
+
+    var html =
+      '<div class="stats">' +
+        '<div class="stat"><div class="label">Expected</div><div class="value num">' + fmt.format(totals.expected) + '</div></div>' +
+        '<div class="stat"><div class="label">Collected</div><div class="value num good">' + fmt.format(totals.collected) + '</div></div>' +
+        '<div class="stat"><div class="label">Outstanding</div><div class="value num ' + (totals.outstanding>0?"bad":"") + '">' + fmt.format(totals.outstanding) + '</div></div>' +
+        '<div class="stat"><div class="label">Collection rate</div><div class="value num">' + pct(totals.rate) + '</div></div>' +
+      '</div>' +
+      '<div class="chiprow">' +
+        '<span class="chip paid"><span class="dot"></span>' + totals.paid + ' paid</span>' +
+        '<span class="chip partial"><span class="dot"></span>' + totals.partial + ' partial</span>' +
+        '<span class="chip late"><span class="dot"></span>' + totals.late + ' late</span>' +
+        '<span class="chip unpaid"><span class="dot"></span>' + totals.unpaid + ' unpaid</span>' +
+      '</div>';
+
+    if(!tenants.length){
+      html += '<div class="empty">No active tenants found. Add rows to the Tenants tab of your Google Sheet — this page reflects it automatically.</div>';
+    } else {
+      if(residential.length){
+        html += '<div class="section-head"><h2>Residential</h2><div class="rule"></div><span class="count">' + residential.length + '</span></div>';
+        html += residential.map(tenantCardHtml).join("");
+      }
+      if(commercial.length){
+        html += '<div class="section-head"><h2>Commercial</h2><div class="rule"></div><span class="count">' + commercial.length + '</span></div>';
+        html += commercial.map(tenantCardHtml).join("");
+      }
+    }
+    content.innerHTML = html;
+  }
+
+  function renderHistory(){
+    var list = $("historyList");
+    var history = latestData.history || [];
+    if(!history.length){
+      list.innerHTML = '<div class="empty">No prior months recorded yet. Once a month passes, it will appear here automatically for audit purposes.</div>';
+      return;
+    }
+    list.innerHTML = history.map(function(h){
+      var totals = totalsFor(h.rows);
+      var rowsHtml = h.rows.map(function(r){
+        return '<tr>' +
+          '<td>' + escapeHtml(r.Name) + '</td>' +
+          '<td>' + escapeHtml(r.Unit||"") + '</td>' +
+          '<td>' + (String(r.Type).toLowerCase()==="commercial"?"Commercial":"Residential") + '</td>' +
+          '<td class="amt num">' + fmt.format(Number(r.Expected)||0) + '</td>' +
+          '<td class="amt num">' + fmt.format(Number(r.Collected)||0) + '</td>' +
+          '<td>' + statusLabel(String(r.Status).toLowerCase()) + '</td>' +
+          '<td>' + (r.DatePaid||"—") + '</td>' +
+          '<td class="comment">' + escapeHtml(r.Comment||"") + '</td>' +
+        '</tr>';
+      }).join("");
+      return '<details class="month-entry">' +
+        '<summary><div><div class="m-title">' + monthLabel(h.month) + '</div>' +
+        '<div class="m-sub">' + fmt.format(totals.collected) + ' of ' + fmt.format(totals.expected) + ' collected · ' + totals.unpaid + ' unpaid</div></div>' +
+        '<div class="m-rate num">' + pct(totals.rate) + '</div></summary>' +
+        '<div class="m-body">' +
+        '<div class="table-wrap"><table><thead><tr><th>Tenant</th><th>Unit</th><th>Type</th><th>Expected</th><th>Collected</th><th>Status</th><th>Date paid</th><th>Comment</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>' +
+        '<div class="btn-row"><button class="btn small export-month-btn" data-month="' + h.month + '">Export month (CSV)</button></div>' +
+        '</div></details>';
+    }).join("");
+  }
+
+  function csvEscape(v){
+    var s = String(v===undefined||v===null?"":v);
+    if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+    return s;
+  }
+  function downloadBlob(filename, data, mime){
+    var blob = new Blob([data], {type: mime});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  }
+  function exportMonthCsv(month){
+    var h = (latestData.history||[]).find(function(x){ return x.month===month; });
+    if(!h) return;
+    var header = ["Tenant","Unit","Type","Base Rent","Tax Rate %","Expected","Collected","Outstanding","Status","Date Paid","Method","Comment"];
+    var lines = [header.join(",")];
+    h.rows.forEach(function(r){
+      lines.push([
+        r.Name, r.Unit||"", r.Type, r.BaseRent, r.TaxRatePct||0, r.Expected, r.Collected,
+        (Number(r.Expected)-Number(r.Collected)), statusLabel(String(r.Status).toLowerCase()), r.DatePaid||"", r.Method||"", r.Comment||""
+      ].map(csvEscape).join(","));
+    });
+    downloadBlob("rent-ledger-" + month + ".csv", lines.join("\n"), "text/csv");
+  }
+
+  function initRowState(){
+    rowState = {};
+    (latestData.tenants||[]).forEach(function(t){
+      var key = keyFor(t.name, t.unit);
+      var existing = (latestData.current||[]).find(function(r){ return r.Name===t.name && r.Unit===t.unit; });
+      if(existing){
+        rowState[key] = {
+          collected: Number(existing.Collected)||0, datePaid: existing.DatePaid||"", method: existing.Method||"",
+          status: String(existing.Status||"unpaid").toLowerCase(), statusManual: true, comment: existing.Comment||""
+        };
+      } else {
+        rowState[key] = { collected:0, datePaid:"", method:"", status:"unpaid", statusManual:false, comment:"" };
+      }
+    });
+  }
+
+  async function loadData(){
+    if(!configured()){ showConnect(); return; }
+    try{
+      clearBanner();
+      var month = currentMonthKey();
+      latestData = await apiGet(month);
+      $("monthPill").textContent = monthLabel(latestData.month);
+      initRowState();
+      renderCollect();
+      renderHistory();
+    }catch(err){
+      $("collectContent").innerHTML = "";
+      $("historyList").innerHTML = "";
+      showBanner("error", "Couldn't load your ledger: " + escapeHtml(err.message) + ". <button class='btn small' id='retryBtn' style='margin-left:6px;'>Retry</button>", {dismissable:false});
+      var retry = document.getElementById("retryBtn");
+      if(retry) retry.addEventListener("click", loadData);
+    }
+  }
+
+  function setSaveState(key, state, text){
+    var el = document.querySelector('.save-state[data-key="' + CSS.escape(encodeURIComponent(key)) + '"]');
+    if(!el) return;
+    el.className = "save-state" + (state ? " " + state : "");
+    el.textContent = text || "";
+  }
+
+  function scheduleSave(key, immediate){
+    var t = latestData.tenants.find(function(x){ return keyFor(x.name,x.unit) === key; });
+    if(!t) return;
+    var doSave = async function(){
+      setSaveState(key, "", "Saving…");
+      try{
+        await apiPost({
+          name: t.name, unit: t.unit, month: latestData.month,
+          collected: rowState[key].collected, datePaid: rowState[key].datePaid,
+          method: rowState[key].method, status: rowState[key].status, comment: rowState[key].comment
+        });
+        setSaveState(key, "saved", "Saved " + new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}));
+      }catch(err){
+        setSaveState(key, "error", "Couldn't save — tap to retry");
+      }
+    };
+    clearTimeout(saveTimers[key]);
+    if(immediate){ doSave(); } else { saveTimers[key] = setTimeout(doSave, 800); }
+  }
+
+  document.addEventListener("click", function(e){
+    if(e.target.classList.contains("save-state") && e.target.classList.contains("error")){
+      var key = decodeURIComponent(e.target.dataset.key);
+      scheduleSave(key, true);
+    }
+  });
+
+  document.addEventListener("input", function(e){
+    var card = e.target.closest(".tcard");
+    if(!card) return;
+    var key = decodeURIComponent(card.dataset.key);
+    var r = rowState[key];
+    if(!r) return;
+    if(e.target.classList.contains("in-collected")){
+      r.collected = parseFloat(e.target.value) || 0;
+      if(!r.statusManual){
+        var t = latestData.tenants.find(function(x){ return keyFor(x.name,x.unit) === key; });
+        r.status = suggestStatus(t.expected, r.collected);
+        var sel = card.querySelector(".in-status");
+        sel.value = r.status; sel.className = "in-status status-select st-" + r.status;
+      }
+      renderCollectStatsOnly();
+      scheduleSave(key, false);
+    } else if(e.target.classList.contains("in-comment")){
+      r.comment = e.target.value; scheduleSave(key, false);
+    }
+  });
+
+  document.addEventListener("change", function(e){
+    var card = e.target.closest(".tcard");
+    if(!card) return;
+    var key = decodeURIComponent(card.dataset.key);
+    var r = rowState[key];
+    if(!r) return;
+    if(e.target.classList.contains("in-date")){
+      r.datePaid = e.target.value; scheduleSave(key, true);
+    } else if(e.target.classList.contains("in-method")){
+      r.method = e.target.value; scheduleSave(key, true);
+    } else if(e.target.classList.contains("in-status")){
+      r.status = e.target.value; r.statusManual = true;
+      e.target.className = "in-status status-select st-" + r.status;
+      renderCollectStatsOnly();
+      scheduleSave(key, true);
+    }
+  });
+
+  function renderCollectStatsOnly(){
+    var statsEl = document.querySelector("#collectContent .stats");
+    var chipEl = document.querySelector("#collectContent .chiprow");
+    if(!statsEl || !chipEl) return;
+    var rows = latestData.tenants.map(function(t){ return Object.assign({}, rowState[keyFor(t.name,t.unit)], {expected:t.expected}); });
+    var totals = totalsFor(rows);
+    statsEl.innerHTML =
+      '<div class="stat"><div class="label">Expected</div><div class="value num">' + fmt.format(totals.expected) + '</div></div>' +
+      '<div class="stat"><div class="label">Collected</div><div class="value num good">' + fmt.format(totals.collected) + '</div></div>' +
+      '<div class="stat"><div class="label">Outstanding</div><div class="value num ' + (totals.outstanding>0?"bad":"") + '">' + fmt.format(totals.outstanding) + '</div></div>' +
+      '<div class="stat"><div class="label">Collection rate</div><div class="value num">' + pct(totals.rate) + '</div></div>';
+    chipEl.innerHTML =
+      '<span class="chip paid"><span class="dot"></span>' + totals.paid + ' paid</span>' +
+      '<span class="chip partial"><span class="dot"></span>' + totals.partial + ' partial</span>' +
+      '<span class="chip late"><span class="dot"></span>' + totals.late + ' late</span>' +
+      '<span class="chip unpaid"><span class="dot"></span>' + totals.unpaid + ' unpaid</span>';
+  }
+
+  document.addEventListener("click", function(e){
+    if(!e.target.classList.contains("export-month-btn")) return;
+    exportMonthCsv(e.target.dataset.month);
+  });
+
+  document.querySelectorAll(".tabbtn").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      document.querySelectorAll(".tabbtn").forEach(function(b){ b.classList.remove("active"); });
+      document.querySelectorAll(".panel").forEach(function(p){ p.classList.remove("active"); });
+      btn.classList.add("active");
+      $("panel-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  $("refreshBtn").addEventListener("click", loadData);
+
+  function showConnect(){ $("connectOverlay").classList.remove("hidden"); }
+  function hideConnect(){ $("connectOverlay").classList.add("hidden"); }
+
+  $("settingsBtn").addEventListener("click", function(){
+    $("apiUrlInput").value = apiUrl();
+    $("tokenInput").value = token();
+    showConnect();
+  });
+
+  $("connectForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    localStorage.setItem(LS_URL, $("apiUrlInput").value.trim());
+    localStorage.setItem(LS_TOKEN, $("tokenInput").value.trim());
+    hideConnect();
+    loadData();
+  });
+
+  loadData();
+})();
+</script>
+</body>
+</html>
