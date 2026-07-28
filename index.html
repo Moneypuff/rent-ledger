@@ -46,6 +46,26 @@
   .month-pill{
     font-size:0.72rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase;
     color:var(--accent-strong); background:var(--accent-soft); border-radius:999px; padding:5px 11px; white-space:nowrap;
+    border:1px solid transparent; width:auto; font-family:var(--sans); cursor:pointer;
+    -webkit-appearance:none; appearance:none; text-align:center; text-align-last:center;
+  }
+  /* Backfill: an amber bar plus an amber pill, so there's no mistaking which
+     month you're typing into. */
+  .month-pill.backfill{ color:var(--warn); background:var(--warn-soft); border-color:var(--warn); }
+  body.backfill .topbar{ border-bottom-color:var(--warn); box-shadow:inset 0 -3px 0 var(--warn); }
+  .backfill-bar{
+    background:var(--warn-soft); color:var(--warn); border-bottom:1px solid var(--warn);
+    padding:9px 18px; font-size:0.8rem; line-height:1.4; display:none; gap:8px; align-items:baseline;
+  }
+  body.backfill .backfill-bar{ display:flex; }
+  .backfill-bar strong{ font-weight:700; white-space:nowrap; }
+  .backfill-bar .back-to-now{
+    margin-left:auto; background:none; border:1px solid var(--warn); color:var(--warn);
+    border-radius:7px; padding:3px 9px; font-size:0.74rem; font-weight:600; cursor:pointer; white-space:nowrap;
+  }
+  .month-tag{
+    font-size:0.62rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--warn); background:var(--warn-soft); border-radius:999px; padding:2px 7px; margin-left:8px; white-space:nowrap;
   }
   .icon-btn{
     background:none; border:1px solid var(--line-strong); border-radius:8px; width:32px; height:32px;
@@ -159,7 +179,7 @@
 <div class="topbar">
   <h1 class="brand">Rent<span class="accent-dot">·</span>Ledger</h1>
   <div class="topbar-right">
-    <span class="month-pill" id="monthPill">—</span>
+    <select class="month-pill" id="monthPicker" aria-label="Month being edited"></select>
     <button class="icon-btn" id="refreshBtn" title="Refresh" aria-label="Refresh">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 0 1 15.3-6.4M21 12a9 9 0 0 1-15.3 6.4"/><path d="M18 3v5h-5M6 21v-5h5"/></svg>
     </button>
@@ -167,6 +187,11 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.6 1z"/></svg>
     </button>
   </div>
+</div>
+
+<div class="backfill-bar" id="backfillBar">
+  <span><strong>Backfill.</strong> Entries save to the <code>Collections_Backfill</code> tab, separate from months recorded live.</span>
+  <button class="back-to-now" id="backToNowBtn">Back to current month</button>
 </div>
 
 <div id="bannerRegion"></div>
@@ -230,6 +255,13 @@
     return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
   }
   function statusLabel(s){ return { paid:"Paid", partial:"Partial", late:"Late", unpaid:"Unpaid" }[s] || s; }
+  function shiftMonth(mk, back){
+    var p = mk.split("-"), d = new Date(parseInt(p[0],10), parseInt(p[1],10)-1-back, 1);
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+  }
+  // How far back the picker offers. Two years covers a late start on the books
+  // without turning the list into a scroll.
+  var MONTHS_BACK = 24;
   function suggestStatus(expected, collected){
     if(expected <= 0) return collected > 0 ? "paid" : "unpaid";
     if(collected >= expected - 0.005) return "paid";
@@ -242,6 +274,7 @@
   function configured(){ return !!apiUrl() && !!token(); }
 
   var latestData = null;
+  var selectedMonth = currentMonthKey(); // which month the Collect tab is editing
   var rowState = {}; // key -> {collected, datePaid, method, status, statusManual, comment}
   var saveTimers = {};
   var lastSaved = {}; // key -> signature of what the Sheet already holds, so no-op edits don't append
@@ -400,7 +433,8 @@
         '</tr>';
       }).join("");
       return '<details class="month-entry">' +
-        '<summary><div><div class="m-title">' + monthLabel(h.month) + '</div>' +
+        '<summary><div><div class="m-title">' + monthLabel(h.month) +
+        (h.backfilled ? '<span class="month-tag">Backfilled</span>' : '') + '</div>' +
         '<div class="m-sub">' + fmt.format(totals.collected) + ' of ' + fmt.format(totals.expected) + ' collected · ' + totals.unpaid + ' unpaid</div></div>' +
         '<div class="m-rate num">' + pct(totals.rate) + '</div></summary>' +
         '<div class="m-body">' +
@@ -456,14 +490,29 @@
     });
   }
 
+  function renderMonthPicker(){
+    var now = currentMonthKey();
+    var picker = $("monthPicker");
+    var opts = [];
+    for(var i = 0; i < MONTHS_BACK; i++){
+      var mk = shiftMonth(now, i);
+      opts.push('<option value="' + mk + '"' + (mk === selectedMonth ? " selected" : "") + '>' +
+        monthLabel(mk) + (i === 0 ? "" : " ·") + '</option>');
+    }
+    picker.innerHTML = opts.join("");
+    var backfilling = selectedMonth !== now;
+    picker.classList.toggle("backfill", backfilling);
+    document.body.classList.toggle("backfill", backfilling);
+  }
+
   async function loadData(){
     if(!configured()){ showConnect(); return; }
     try{
       clearBanner();
       await flushAllPending(); // never reload over an edit that hasn't been written yet
-      var month = currentMonthKey();
-      latestData = await apiGet(month);
-      $("monthPill").textContent = monthLabel(latestData.month);
+      latestData = await apiGet(selectedMonth);
+      selectedMonth = latestData.month;
+      renderMonthPicker();
       initRowState();
       renderCollect();
       renderHistory();
@@ -617,6 +666,18 @@
 
   $("refreshBtn").addEventListener("click", loadData);
 
+  $("monthPicker").addEventListener("change", function(){
+    selectedMonth = this.value;
+    renderMonthPicker();
+    loadData();
+  });
+
+  $("backToNowBtn").addEventListener("click", function(){
+    selectedMonth = currentMonthKey();
+    renderMonthPicker();
+    loadData();
+  });
+
   function showConnect(){ $("connectOverlay").classList.remove("hidden"); }
   function hideConnect(){ $("connectOverlay").classList.add("hidden"); }
 
@@ -634,6 +695,7 @@
     loadData();
   });
 
+  renderMonthPicker();
   loadData();
 })();
 </script>

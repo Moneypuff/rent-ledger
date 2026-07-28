@@ -91,6 +91,24 @@ This is destructive and can't be undone from the app, so take
 **File → Make a copy** first. Running it twice is harmless; the second run
 reports nothing to do.
 
+## Entering a previous month
+
+Tap the month in the top bar and pick any of the last 24 months. Choose
+anything other than the current month and the page goes into **backfill mode**:
+an amber bar appears, the month pill turns amber, and the Collect tab fills in
+with whatever that month already has so you can enter the rest.
+
+Backfilled entries are written to a separate **`Collections_Backfill`** tab, so
+what you recorded as it happened stays cleanly apart from what you typed in
+after the fact. The tab is created the first time you save a past month — if
+you never backfill, it never appears. Everything else works the same: the same
+one-row-per-tenant coalescing applies, and History reads both tabs, marking a
+month **Backfilled** when all of its rows came from that tab.
+
+Routing is decided by the backend from the month itself, not by the page, so
+the current month can only ever land in `Collections`. **Back to current month**
+in the amber bar returns you to today.
+
 ## Editing rent amounts mid-lease
 
 Changing `BaseRent` or `TaxRatePct` only affects collection entries saved *after* the change — past months already recorded in `Collections` keep the numbers that were true at the time, which is what you want for audit purposes.

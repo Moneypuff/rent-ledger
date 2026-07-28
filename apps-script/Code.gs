@@ -10,6 +10,12 @@
 
 var SHEET_TENANTS = 'Tenants';
 var SHEET_COLLECTIONS = 'Collections';
+/**
+ * Months entered after the fact land here instead of Collections, so what was
+ * recorded live stays visibly separate from what was typed in later. Created
+ * on first use — if you never backfill, the tab never appears.
+ */
+var SHEET_BACKFILL = 'Collections_Backfill';
 var TENANT_HEADERS = ['Name', 'Unit', 'Type', 'BaseRent', 'TaxRatePct', 'Active'];
 var COLLECTION_HEADERS = ['Timestamp', 'Month', 'Name', 'Unit', 'Type', 'BaseRent', 'TaxRatePct', 'Expected', 'Collected', 'Status', 'DatePaid', 'Method', 'Comment'];
 var SEED_UNITS = ['1560 Trepanier', '2489-2499 Jean Talon', "4239-4245 d'Herelle", '6495 Pie-IX', '7420 Iberville', '7727 14e av', '9720-9730 Jeanne-Mance'];
@@ -54,6 +60,18 @@ function ensureSheets_() {
     collections.setFrozenRows(1);
   }
   return { tenants: tenants, collections: collections };
+}
+
+/** The backfill tab exists only once something has actually been backfilled. */
+function backfillSheet_(createIfMissing) {
+  var ss = ss_();
+  var sheet = ss.getSheetByName(SHEET_BACKFILL);
+  if (!sheet && createIfMissing) {
+    sheet = ss.insertSheet(SHEET_BACKFILL);
+    sheet.appendRow(COLLECTION_HEADERS);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
 }
 
 function sheetToObjects_(sheet) {
@@ -105,28 +123,47 @@ function doGet(e) {
       })
       .filter(function (t) { return t.name || t.baseRent > 0; });
 
-    var month = params.month || currentMonthKey_();
-    var collRows = sheetToObjects_(sheets.collections);
+    var currentMonth = currentMonthKey_();
+    var month = normalizeText_(params.month) || currentMonth;
+
+    // Both tabs feed the same view. Source rides along so the page can mark a
+    // month as typed in after the fact rather than recorded as it happened.
+    var collRows = sheetToObjects_(sheets.collections).map(function (r) { r.Source = 'live'; return r; });
+    var backfill = backfillSheet_(false);
+    if (backfill) {
+      collRows = collRows.concat(sheetToObjects_(backfill).map(function (r) { r.Source = 'backfill'; return r; }));
+    }
+
     var latest = {};
     collRows.forEach(function (r) {
-      var key = r.Month + '::' + r.Name + '::' + r.Unit;
+      var key = collectionKey_(r.Month, r.Name, r.Unit);
       if (!latest[key] || new Date(r.Timestamp) >= new Date(latest[key].Timestamp)) latest[key] = r;
     });
 
     var byMonth = {};
     Object.keys(latest).forEach(function (key) {
       var r = latest[key];
-      if (!byMonth[r.Month]) byMonth[r.Month] = [];
-      byMonth[r.Month].push(r);
+      var m = toMonthKeyText_(r.Month);
+      if (!byMonth[m]) byMonth[m] = [];
+      byMonth[m].push(r);
     });
 
     var history = Object.keys(byMonth)
       .filter(function (m) { return m !== month; })
       .sort().reverse()
-      .map(function (m) { return { month: m, rows: byMonth[m] }; });
+      .map(function (m) {
+        var rows = byMonth[m];
+        return {
+          month: m,
+          rows: rows,
+          backfilled: rows.every(function (r) { return r.Source === 'backfill'; })
+        };
+      });
 
     return jsonOut_({
       month: month,
+      currentMonth: currentMonth,
+      backfillMonth: month !== currentMonth,
       tenants: tenantRows.filter(function (t) { return t.active; }),
       current: byMonth[month] || [],
       history: history
@@ -191,25 +228,36 @@ function doPost(e) {
     });
     if (!tenant) return jsonOut_({ error: 'unknown tenant' });
 
+    var currentMonth = currentMonthKey_();
+    var month = normalizeText_(body.month) || currentMonth;
+    var isBackfill = month !== currentMonth;
+
     var expected = expectedFor_(tenant.BaseRent, tenant.TaxRatePct, tenant.Type);
     var row = [
-      new Date(), normalizeText_(body.month), normalizeText_(tenant.Name), normalizeText_(tenant.Unit), normalizeType_(tenant.Type),
+      new Date(), month, normalizeText_(tenant.Name), normalizeText_(tenant.Unit), normalizeType_(tenant.Type),
       Number(tenant.BaseRent) || 0, Number(tenant.TaxRatePct) || 0, expected,
       Number(body.collected) || 0, normalizeText_(body.status) || 'unpaid',
       normalizeText_(body.datePaid), normalizeText_(body.method), normalizeText_(body.comment)
     ];
 
+    // Anything but the current month is being entered after the fact, so it
+    // goes to its own tab and never mixes with what was recorded live.
+    var target = isBackfill ? backfillSheet_(true) : sheets.collections;
+
     // The client coalesces edits, but an old cached tab on another device
     // doesn't know that. Enforce one row per tenant-month editing session here
     // too, so duplicates can't come back from a stale front end.
-    var prior = findPriorRow_(sheets.collections, row);
-    if (prior.identical) return jsonOut_({ ok: true, expected: expected, wrote: 'unchanged' });
+    var prior = findPriorRow_(target, row);
+    var result = { ok: true, expected: expected, sheet: isBackfill ? SHEET_BACKFILL : SHEET_COLLECTIONS };
+    if (prior.identical) { result.wrote = 'unchanged'; return jsonOut_(result); }
     if (prior.rowIndex) {
-      sheets.collections.getRange(prior.rowIndex, 1, 1, row.length).setValues([row]);
-      return jsonOut_({ ok: true, expected: expected, wrote: 'updated' });
+      target.getRange(prior.rowIndex, 1, 1, row.length).setValues([row]);
+      result.wrote = 'updated';
+      return jsonOut_(result);
     }
-    sheets.collections.appendRow(row);
-    return jsonOut_({ ok: true, expected: expected, wrote: 'appended' });
+    target.appendRow(row);
+    result.wrote = 'appended';
+    return jsonOut_(result);
   } catch (err) {
     return jsonOut_({ error: String(err) });
   }
@@ -224,9 +272,14 @@ function doPost(e) {
  * copy first. Safe to run more than once; a second run finds nothing to do.
  */
 function dedupeCollections() {
-  var sheet = ss_().getSheetByName(SHEET_COLLECTIONS);
-  if (!sheet || sheet.getLastRow() < 2) {
-    Logger.log('Nothing to do — Collections is empty.');
+  [ss_().getSheetByName(SHEET_COLLECTIONS), backfillSheet_(false)].forEach(function (sheet) {
+    if (sheet) dedupeSheet_(sheet);
+  });
+}
+
+function dedupeSheet_(sheet) {
+  if (sheet.getLastRow() < 2) {
+    Logger.log(sheet.getName() + ': empty, nothing to do.');
     return;
   }
 
@@ -250,13 +303,13 @@ function dedupeCollections() {
   var keep = body.filter(function (row, i) { return keepIdx[i]; });
   var removed = body.length - keep.length;
   if (!removed) {
-    Logger.log('No duplicates found — all ' + keep.length + ' rows are already unique per tenant-month.');
+    Logger.log(sheet.getName() + ': no duplicates — all ' + keep.length + ' rows already unique per tenant-month.');
     return;
   }
 
   sheet.getRange(2, 1, sheet.getMaxRows() - 1, headers.length).clearContent();
   sheet.getRange(2, 1, keep.length, headers.length).setValues(keep);
-  Logger.log('Deleted ' + removed + ' duplicate rows; kept ' + keep.length + ' (one per tenant per month).');
+  Logger.log(sheet.getName() + ': deleted ' + removed + ' duplicate rows; kept ' + keep.length + ' (one per tenant per month).');
 }
 
 function collectionKey_(month, name, unit) {
