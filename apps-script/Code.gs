@@ -165,6 +165,63 @@ function doPost(e) {
   }
 }
 
+/**
+ * Optional tidy-up, run by hand from the editor. Keeps the newest Collections
+ * row for each Month+Name+Unit — the one the app already treats as current —
+ * and moves every superseded row to a Collections_Superseded tab. Nothing is
+ * deleted, so the audit trail survives; the Collections tab just becomes
+ * readable again. Take File > Make a copy first if you want a belt and braces.
+ */
+function dedupeCollections() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_COLLECTIONS);
+  if (!sheet || sheet.getLastRow() < 2) return;
+
+  var values = sheet.getDataRange().getValues();
+  var headers = values[0];
+  var body = values.slice(1).filter(function (row) {
+    return row.some(function (c) { return c !== '' && c !== null; });
+  });
+  var col = {};
+  headers.forEach(function (h, i) { col[h] = i; });
+
+  var newestAt = {};
+  body.forEach(function (row, i) {
+    var key = toMonthKeyText_(row[col.Month]) + '::' + normalizeText_(row[col.Name]) + '::' + normalizeText_(row[col.Unit]);
+    var prev = newestAt[key];
+    if (prev === undefined || new Date(row[col.Timestamp]) >= new Date(body[prev][col.Timestamp])) newestAt[key] = i;
+  });
+
+  var keepIdx = {};
+  Object.keys(newestAt).forEach(function (k) { keepIdx[newestAt[k]] = true; });
+  var keep = body.filter(function (row, i) { return keepIdx[i]; });
+  var superseded = body.filter(function (row, i) { return !keepIdx[i]; });
+  if (!superseded.length) return;
+
+  var archive = ss.getSheetByName('Collections_Superseded');
+  if (!archive) {
+    archive = ss.insertSheet('Collections_Superseded');
+    archive.appendRow(headers);
+    archive.setFrozenRows(1);
+  }
+  archive.getRange(archive.getLastRow() + 1, 1, superseded.length, headers.length).setValues(superseded);
+
+  sheet.getRange(2, 1, sheet.getMaxRows() - 1, headers.length).clearContent();
+  if (keep.length) sheet.getRange(2, 1, keep.length, headers.length).setValues(keep);
+
+  Logger.log('Kept ' + keep.length + ' current rows; archived ' + superseded.length + ' superseded rows.');
+}
+
+/** Month is written as text, but tolerate a cell Sheets has turned into a date. */
+function toMonthKeyText_(v) {
+  if (Object.prototype.toString.call(v) === '[object Date]') {
+    return Utilities.formatDate(v, ss_().getSpreadsheetTimeZone(), 'yyyy-MM');
+  }
+  return normalizeText_(v);
+}
+
+function ss_() { return SpreadsheetApp.getActiveSpreadsheet(); }
+
 /** Run once from the editor after pasting this file. */
 function setup() {
   ensureSheets_();

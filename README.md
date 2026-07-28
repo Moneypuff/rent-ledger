@@ -60,6 +60,27 @@ If you set this up before this change landed, re-paste
 redeploy — **Deploy → Manage deployments → ✏️ edit → Version: New version →
 Deploy**. Keep the same deployment so your Web App URL and secret don't change.
 
+## How saving works (and why Collections used to repeat itself)
+
+Editing a card doesn't write immediately. Changes are held until you leave the
+card — tap another tenant, dismiss the keyboard, or switch away from the page —
+and then written as **one** row. A save is also skipped entirely when nothing
+actually changed, so opening the page and tabbing through cards appends
+nothing.
+
+That matters because `Collections` is append-only. Earlier versions saved on
+every field change and on every pause while typing a comment, so one tenant
+could produce seven rows in a single sitting. The app itself was never
+confused — it always reads the newest row per tenant per month — but the tab
+was miserable to read.
+
+To tidy up rows written by the old behaviour, open the Apps Script editor,
+choose **`dedupeCollections`** in the function dropdown and click **Run**. It
+keeps the newest row for each tenant-month (the one the app already treats as
+current) and moves the superseded ones to a `Collections_Superseded` tab.
+Nothing is deleted. It's safe to run more than once, and a
+**File → Make a copy** beforehand costs nothing.
+
 ## Editing rent amounts mid-lease
 
 Changing `BaseRent` or `TaxRatePct` only affects collection entries saved *after* the change — past months already recorded in `Collections` keep the numbers that were true at the time, which is what you want for audit purposes.

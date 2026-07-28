@@ -92,6 +92,7 @@
   .tcard-expected{ text-align:right; }
   .tcard-expected .amt{ font-size:1.15rem; }
   .tcard-expected .breakdown{ font-size:0.72rem; color:var(--ink-faint); margin-top:1px; }
+  .tcard-expected .breakdown.warn{ color:var(--warn); }
 
   .field-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
   .field{ display:flex; flex-direction:column; gap:4px; }
@@ -243,6 +244,14 @@
   var latestData = null;
   var rowState = {}; // key -> {collected, datePaid, method, status, statusManual, comment}
   var saveTimers = {};
+  var lastSaved = {}; // key -> signature of what the Sheet already holds, so no-op edits don't append
+  var SAVE_DELAY = 2500;
+
+  // Every field on a card folds into one signature: editing four fields in one
+  // sitting is one change to the ledger, not four.
+  function saveSignature(r){
+    return JSON.stringify([Number(r.collected)||0, trimmed(r.datePaid), trimmed(r.method), trimmed(r.status), trimmed(r.comment)]);
+  }
 
   function keyFor(name, unit){ return name + "::" + unit; }
 
@@ -294,14 +303,19 @@
   function tenantCardHtml(t){
     var key = keyFor(t.name, t.unit);
     var r = rowState[key];
+    // A tax rate on a residential row is silently ignored when computing
+    // Expected — almost always a Type that should have said commercial.
+    var taxIgnored = t.type !== "commercial" && t.taxRate > 0;
     var breakdown = t.type === "commercial"
       ? "Base " + fmt.format(t.baseRent) + " + tax " + fmt.format(t.expected - t.baseRent)
-      : "No tax (residential)";
+      : (taxIgnored
+          ? "⚠ " + pct(t.taxRate) + " tax ignored — Type is residential"
+          : "No tax (residential)");
     return (
       '<div class="tcard" data-key="' + encodeURIComponent(key) + '">' +
         '<div class="tcard-head">' +
           '<div><div class="tcard-name">' + escapeHtml(t.name || "(unnamed)") + '</div><div class="tcard-unit">' + escapeHtml(t.unit||"") + '</div></div>' +
-          '<div class="tcard-expected"><div class="amt num">' + fmt.format(t.expected) + '</div><div class="breakdown">' + breakdown + '</div></div>' +
+          '<div class="tcard-expected"><div class="amt num">' + fmt.format(t.expected) + '</div><div class="breakdown' + (taxIgnored ? " warn" : "") + '">' + breakdown + '</div></div>' +
         '</div>' +
         '<div class="field-grid">' +
           '<div class="field"><label>Amount collected ($)</label><input type="number" step="0.01" min="0" class="in-collected" value="' + r.collected + '"></div>' +
@@ -424,6 +438,7 @@
 
   function initRowState(){
     rowState = {};
+    lastSaved = {};
     (latestData.tenants||[]).forEach(function(t){
       var key = keyFor(t.name, t.unit);
       var existing = (latestData.current||[]).find(function(r){ return trimmed(r.Name)===trimmed(t.name) && trimmed(r.Unit)===trimmed(t.unit); });
@@ -435,6 +450,9 @@
       } else {
         rowState[key] = { collected:0, datePaid:"", method:"", status:"unpaid", statusManual:false, comment:"" };
       }
+      // Baseline of what the Sheet already holds, so merely opening the page and
+      // tabbing through a card never appends anything.
+      lastSaved[key] = saveSignature(rowState[key]);
     });
   }
 
@@ -442,6 +460,7 @@
     if(!configured()){ showConnect(); return; }
     try{
       clearBanner();
+      await flushAllPending(); // never reload over an edit that hasn't been written yet
       var month = currentMonthKey();
       latestData = await apiGet(month);
       $("monthPill").textContent = monthLabel(latestData.month);
@@ -464,32 +483,66 @@
     el.textContent = text || "";
   }
 
-  function scheduleSave(key, immediate){
-    var t = latestData.tenants.find(function(x){ return keyFor(x.name,x.unit) === key; });
-    if(!t) return;
-    var doSave = async function(){
-      setSaveState(key, "", "Saving…");
-      try{
-        await apiPost({
-          name: t.name, unit: t.unit, month: latestData.month,
-          collected: rowState[key].collected, datePaid: rowState[key].datePaid,
-          method: rowState[key].method, status: rowState[key].status, comment: rowState[key].comment
-        });
-        setSaveState(key, "saved", "Saved " + new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}));
-      }catch(err){
-        setSaveState(key, "error", "Couldn't save — tap to retry");
-      }
-    };
+  // Writes the card as it now stands, but only if it differs from what the
+  // Sheet already holds — the Collections log is append-only, so an extra POST
+  // is an extra row forever.
+  async function flushSave(key){
     clearTimeout(saveTimers[key]);
-    if(immediate){ doSave(); } else { saveTimers[key] = setTimeout(doSave, 800); }
+    delete saveTimers[key];
+    var t = latestData.tenants.find(function(x){ return keyFor(x.name,x.unit) === key; });
+    var r = rowState[key];
+    if(!t || !r) return;
+    var signature = saveSignature(r);
+    if(signature === lastSaved[key]){ setSaveState(key, "", ""); return; }
+    setSaveState(key, "", "Saving…");
+    try{
+      await apiPost({
+        name: t.name, unit: t.unit, month: latestData.month,
+        collected: r.collected, datePaid: r.datePaid,
+        method: r.method, status: r.status, comment: r.comment
+      });
+      lastSaved[key] = signature;
+      setSaveState(key, "saved", "Saved " + new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}));
+    }catch(err){
+      setSaveState(key, "error", "Couldn't save — tap to retry");
+    }
   }
+
+  // Edits only queue here; the write happens once you leave the card (or after
+  // a long pause), so filling in five fields is one row, not five.
+  function scheduleSave(key){
+    clearTimeout(saveTimers[key]);
+    saveTimers[key] = setTimeout(function(){ flushSave(key); }, SAVE_DELAY);
+    if(saveSignature(rowState[key]) !== lastSaved[key]) setSaveState(key, "", "Not saved yet…");
+  }
+
+  function flushAllPending(){
+    return Promise.all(Object.keys(saveTimers).map(function(key){ return flushSave(key); }));
+  }
+
+  // Leaving the card is the real "I'm done with this tenant" signal.
+  document.addEventListener("focusout", function(e){
+    var card = e.target.closest && e.target.closest(".tcard");
+    if(!card) return;
+    var next = e.relatedTarget;
+    if(next && card.contains(next)) return; // still moving between fields on the same card
+    var key = decodeURIComponent(card.dataset.key);
+    if(saveTimers[key]) flushSave(key);
+  });
 
   document.addEventListener("click", function(e){
     if(e.target.classList.contains("save-state") && e.target.classList.contains("error")){
       var key = decodeURIComponent(e.target.dataset.key);
-      scheduleSave(key, true);
+      flushSave(key);
     }
   });
+
+  // A backgrounded tab on mobile can be frozen without warning — don't sit on
+  // a pending edit.
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "hidden") flushAllPending();
+  });
+  window.addEventListener("pagehide", flushAllPending);
 
   document.addEventListener("input", function(e){
     var card = e.target.closest(".tcard");
@@ -506,9 +559,9 @@
         sel.value = r.status; sel.className = "in-status status-select st-" + r.status;
       }
       renderCollectStatsOnly();
-      scheduleSave(key, false);
+      scheduleSave(key);
     } else if(e.target.classList.contains("in-comment")){
-      r.comment = e.target.value; scheduleSave(key, false);
+      r.comment = e.target.value; scheduleSave(key);
     }
   });
 
@@ -519,14 +572,14 @@
     var r = rowState[key];
     if(!r) return;
     if(e.target.classList.contains("in-date")){
-      r.datePaid = e.target.value; scheduleSave(key, true);
+      r.datePaid = e.target.value; scheduleSave(key);
     } else if(e.target.classList.contains("in-method")){
-      r.method = e.target.value; scheduleSave(key, true);
+      r.method = e.target.value; scheduleSave(key);
     } else if(e.target.classList.contains("in-status")){
       r.status = e.target.value; r.statusManual = true;
       e.target.className = "in-status status-select st-" + r.status;
       renderCollectStatsOnly();
-      scheduleSave(key, true);
+      scheduleSave(key);
     }
   });
 
