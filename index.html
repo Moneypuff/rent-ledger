@@ -212,6 +212,7 @@
   var fmt = new Intl.NumberFormat("en-CA", { style:"currency", currency:"CAD" });
   var pct = function(n){ return (Math.round(n*10)/10).toString() + "%"; };
   var $ = function(id){ return document.getElementById(id); };
+  var trimmed = function(v){ return String(v===undefined||v===null?"":v).trim(); };
 
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, function(c){
@@ -326,8 +327,13 @@
   function renderCollect(){
     var content = $("collectContent");
     var tenants = latestData.tenants || [];
-    var residential = tenants.filter(function(t){ return t.type === "residential"; });
-    var commercial = tenants.filter(function(t){ return t.type === "commercial"; });
+    // The last group is a catch-all: every tenant must land in exactly one
+    // group, so no row can end up counted in the totals but missing a card.
+    var groups = [
+      { title:"Residential", items: tenants.filter(function(t){ return t.type === "residential"; }) },
+      { title:"Commercial",  items: tenants.filter(function(t){ return t.type === "commercial"; }) },
+      { title:"Other",       items: tenants.filter(function(t){ return t.type !== "residential" && t.type !== "commercial"; }) }
+    ];
 
     var rows = tenants.map(function(t){ return Object.assign({}, rowState[keyFor(t.name,t.unit)], {expected:t.expected}); });
     var totals = totalsFor(rows);
@@ -347,16 +353,13 @@
       '</div>';
 
     if(!tenants.length){
-      html += '<div class="empty">No active tenants found. Add rows to the Tenants tab of your Google Sheet — this page reflects it automatically.</div>';
+      html += '<div class="empty">No active tenants found. In the Tenants tab of your Google Sheet, each row needs a <strong>Name</strong> or a <strong>BaseRent</strong> to show up here, and <strong>Active</strong> must not be <code>FALSE</code>. This page reflects the Sheet automatically — pull to refresh after editing.</div>';
     } else {
-      if(residential.length){
-        html += '<div class="section-head"><h2>Residential</h2><div class="rule"></div><span class="count">' + residential.length + '</span></div>';
-        html += residential.map(tenantCardHtml).join("");
-      }
-      if(commercial.length){
-        html += '<div class="section-head"><h2>Commercial</h2><div class="rule"></div><span class="count">' + commercial.length + '</span></div>';
-        html += commercial.map(tenantCardHtml).join("");
-      }
+      groups.forEach(function(g){
+        if(!g.items.length) return;
+        html += '<div class="section-head"><h2>' + g.title + '</h2><div class="rule"></div><span class="count">' + g.items.length + '</span></div>';
+        html += g.items.map(tenantCardHtml).join("");
+      });
     }
     content.innerHTML = html;
   }
@@ -423,7 +426,7 @@
     rowState = {};
     (latestData.tenants||[]).forEach(function(t){
       var key = keyFor(t.name, t.unit);
-      var existing = (latestData.current||[]).find(function(r){ return r.Name===t.name && r.Unit===t.unit; });
+      var existing = (latestData.current||[]).find(function(r){ return trimmed(r.Name)===trimmed(t.name) && trimmed(r.Unit)===trimmed(t.unit); });
       if(existing){
         rowState[key] = {
           collected: Number(existing.Collected)||0, datePaid: existing.DatePaid||"", method: existing.Method||"",

@@ -39,6 +39,27 @@ These are stored only in that browser's local storage, never committed to the re
 
 Just edit the **Tenants** tab of the Sheet directly — add a row for a new tenant, change a rent amount, flip `Active` to `FALSE` for a move-out. The page always reads the Sheet fresh, so there's nothing to redeploy.
 
+A row shows up on the page once it has a **Name** or a **BaseRent**, so the
+blank seeded rows stay out of the way until you fill one in. **Type** is
+forgiving — anything starting with "comm" is treated as commercial, anything
+else (including a blank cell) as residential — and **Active** only hides a
+tenant when it's explicitly `FALSE`/`NO`/`0`.
+
+### A tenant isn't showing up (no box to enter rent collected)
+
+Every tenant card carries its own "Amount collected ($)" box, so a missing box
+means the card itself isn't rendering. Check, in order:
+
+1. The row has a **Name** or a **BaseRent** — a row with only a Unit is treated as an empty placeholder.
+2. **Active** isn't set to `FALSE`.
+3. You're on the **Collect** tab and have tapped refresh (⟳) since editing the Sheet.
+4. You're editing the **Tenants** tab of the same Sheet the Apps Script is bound to.
+
+If you set this up before this change landed, re-paste
+[`apps-script/Code.gs`](apps-script/Code.gs) into the Apps Script editor and
+redeploy — **Deploy → Manage deployments → ✏️ edit → Version: New version →
+Deploy**. Keep the same deployment so your Web App URL and secret don't change.
+
 ## Editing rent amounts mid-lease
 
 Changing `BaseRent` or `TaxRatePct` only affects collection entries saved *after* the change — past months already recorded in `Collections` keep the numbers that were true at the time, which is what you want for audit purposes.

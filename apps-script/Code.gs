@@ -18,6 +18,25 @@ function getSecret_() {
   return PropertiesService.getScriptProperties().getProperty('SHARED_SECRET') || '';
 }
 
+/** Cells come back as strings, numbers or booleans depending on what was typed. */
+function normalizeText_(v) {
+  return String(v === null || v === undefined ? '' : v).trim();
+}
+
+/**
+ * Anything that isn't recognisably commercial is treated as residential, so a
+ * blank or misspelt Type cell can never make a tenant disappear from the app.
+ */
+function normalizeType_(v) {
+  return normalizeText_(v).toLowerCase().indexOf('comm') === 0 ? 'commercial' : 'residential';
+}
+
+/** Blank counts as active; only an explicit no/false takes a tenant off the list. */
+function isActive_(v) {
+  var s = normalizeText_(v).toUpperCase();
+  return s !== 'FALSE' && s !== 'NO' && s !== 'N' && s !== '0';
+}
+
 function ensureSheets_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var tenants = ss.getSheetByName(SHEET_TENANTS);
@@ -62,7 +81,7 @@ function jsonOut_(obj) {
 function expectedFor_(baseRent, taxRatePct, type) {
   var base = Number(baseRent) || 0;
   var rate = Number(taxRatePct) || 0;
-  var tax = String(type).toLowerCase() === 'commercial' ? base * (rate / 100) : 0;
+  var tax = normalizeType_(type) === 'commercial' ? base * (rate / 100) : 0;
   return base + tax;
 }
 
@@ -72,16 +91,19 @@ function doGet(e) {
     if (params.token !== getSecret_()) return jsonOut_({ error: 'unauthorized' });
 
     var sheets = ensureSheets_();
+    // A row counts as filled in once it has a name or a rent — that way a row
+    // where the name was forgotten still shows up (as "(unnamed)") instead of
+    // silently vanishing, while the blank seeded rows stay out of the way.
     var tenantRows = sheetToObjects_(sheets.tenants)
-      .filter(function (t) { return t.Name; })
       .map(function (t) {
         return {
-          name: t.Name, unit: t.Unit, type: String(t.Type).toLowerCase(),
+          name: normalizeText_(t.Name), unit: normalizeText_(t.Unit), type: normalizeType_(t.Type),
           baseRent: Number(t.BaseRent) || 0, taxRate: Number(t.TaxRatePct) || 0,
           expected: expectedFor_(t.BaseRent, t.TaxRatePct, t.Type),
-          active: String(t.Active).toUpperCase() !== 'FALSE'
+          active: isActive_(t.Active)
         };
-      });
+      })
+      .filter(function (t) { return t.name || t.baseRent > 0; });
 
     var month = params.month || currentMonthKey_();
     var collRows = sheetToObjects_(sheets.collections);
@@ -120,14 +142,18 @@ function doPost(e) {
     if (body.token !== getSecret_()) return jsonOut_({ error: 'unauthorized' });
 
     var sheets = ensureSheets_();
+    var wantName = normalizeText_(body.name);
+    var wantUnit = normalizeText_(body.unit);
     var tenantRows = sheetToObjects_(sheets.tenants);
-    var tenant = tenantRows.find(function (t) { return t.Name === body.name && t.Unit === body.unit; });
+    var tenant = tenantRows.find(function (t) {
+      return normalizeText_(t.Name) === wantName && normalizeText_(t.Unit) === wantUnit;
+    });
     if (!tenant) return jsonOut_({ error: 'unknown tenant' });
 
     var expected = expectedFor_(tenant.BaseRent, tenant.TaxRatePct, tenant.Type);
 
     sheets.collections.appendRow([
-      new Date(), body.month, tenant.Name, tenant.Unit, tenant.Type,
+      new Date(), body.month, normalizeText_(tenant.Name), normalizeText_(tenant.Unit), normalizeType_(tenant.Type),
       Number(tenant.BaseRent) || 0, Number(tenant.TaxRatePct) || 0, expected,
       Number(body.collected) || 0, body.status || 'unpaid',
       body.datePaid || '', body.method || '', body.comment || ''
