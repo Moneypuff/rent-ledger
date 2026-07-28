@@ -68,14 +68,17 @@
 
   .note{
     margin:0 0 16px; padding:12px 14px; border-radius:var(--radius); font-size:0.85rem; line-height:1.5;
-    background:var(--warn-soft); color:var(--warn); border:1px solid var(--warn);
+    background:var(--accent-soft); color:var(--accent-strong); border:1px solid var(--line-strong);
   }
-  .note.calm{ background:var(--accent-soft); color:var(--accent-strong); border-color:var(--line-strong); }
+  .note.warn{ background:var(--warn-soft); color:var(--warn); border-color:var(--warn); }
+  .note.stop{ background:var(--bad-soft); color:var(--bad); border:2px solid var(--bad); }
   .note strong{ font-weight:700; }
+  .note ul{ margin:8px 0 0; padding-left:20px; }
+  .note li{ margin:3px 0; }
 
-  .section-head{ display:flex; align-items:center; gap:10px; margin: 26px 0 12px; }
+  .section-head{ display:flex; align-items:center; gap:10px; margin: 26px 0 12px; flex-wrap:wrap; }
   .section-head h2{ font-size:1.05rem; }
-  .section-head .rule{ flex:1; height:1px; background:var(--line-strong); }
+  .section-head .rule{ flex:1; height:1px; background:var(--line-strong); min-width:20px; }
   .section-head .count{ font-size:0.78rem; color:var(--ink-faint); }
 
   .card{ background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin-bottom:12px; box-shadow:var(--shadow); }
@@ -101,6 +104,8 @@
   td.amt{ font-family:var(--serif); font-variant-numeric:tabular-nums; }
   tr.total td{ font-weight:700; border-top:2px solid var(--line-strong); border-bottom:none; }
   tbody tr:last-child td{ border-bottom:none; }
+  td.missing, .missing{ color:var(--bad); font-weight:600; }
+  td.note-cell{ white-space:normal; color:var(--ink-soft); font-size:0.78rem; }
 
   .field-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
   .field{ display:flex; flex-direction:column; gap:4px; }
@@ -112,6 +117,7 @@
   }
   input[type="number"], input[type="date"]{ font-family:var(--serif); font-variant-numeric:tabular-nums; }
   input:focus, select:focus{ border-color:var(--accent); }
+  input.needed{ border-color:var(--bad); background:var(--bad-soft); }
 
   .btn{ font-size:0.88rem; font-weight:600; border-radius:8px; padding:10px 16px; border:1px solid var(--line-strong); background:var(--paper-raised); color:var(--ink); cursor:pointer; }
   .btn:hover{ border-color:var(--accent); }
@@ -127,12 +133,14 @@
   .tag.cra{ background:var(--accent-soft); color:var(--accent-strong); }
   .tag.rq{ background:var(--warn-soft); color:var(--warn); }
   .tag.done{ background:var(--good-soft); color:var(--good); }
+  .tag.partial{ background:var(--bad-soft); color:var(--bad); }
 
   .tabbar{ position:fixed; bottom:0; left:0; right:0; z-index:30; background:var(--paper-raised); border-top:1px solid var(--line); display:flex; padding-bottom:env(safe-area-inset-bottom); }
   .tabbtn{ flex:1; background:none; border:none; padding:10px 4px 8px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--ink-faint); }
   .tabbtn svg{ width:22px; height:22px; }
   .tabbtn span{ font-size:0.68rem; font-weight:600; letter-spacing:0.02em; }
   .tabbtn.active{ color:var(--accent); }
+  .tabbtn .badge{ position:absolute; transform:translate(14px,-6px); width:8px; height:8px; border-radius:50%; background:var(--bad); }
 
   /* Paystubs */
   .stub{
@@ -154,23 +162,27 @@
   }
   .stub .net .lbl{ font-family:var(--serif); font-size:1.05rem; }
   .stub .net .val{ font-family:var(--serif); font-variant-numeric:tabular-nums; font-size:1.5rem; }
+  .stub .draft{
+    margin-top:12px; padding:9px 11px; border-radius:7px; font-size:0.76rem; line-height:1.45;
+    background:var(--bad-soft); color:var(--bad); border:1px solid var(--bad);
+  }
   .stub-actions{ margin-top:14px; display:flex; justify-content:flex-end; }
   .stub-foot{ font-size:0.7rem; color:var(--ink-faint); margin-top:12px; line-height:1.5; }
 
-  .print-only{ display:none; }
   @media print{
     body{ background:#fff; color:#000; padding:0; }
-    .topbar, .tabbar, .btn-row, .stub-actions, .note, .hint, .filters{ display:none !important; }
+    .topbar, .tabbar, .btn-row, .stub-actions, .hint, .filters{ display:none !important; }
     main{ max-width:none; padding:0; }
     .panel{ display:none !important; }
     .panel.active{ display:block !important; }
-    .print-only{ display:block; }
     .stub{ box-shadow:none; border:1px solid #999; page-break-inside:avoid; break-inside:avoid; page-break-after:always; margin:0 0 12px; }
     .stub:last-child{ page-break-after:auto; }
     body.printing-one .stub{ display:none; }
     body.printing-one .stub.printing{ display:block; }
     .month-entry{ box-shadow:none; break-inside:avoid; }
     .month-entry .m-body{ display:block !important; }
+    /* Disclosures must survive to paper — they are the point. */
+    .note{ display:block !important; border:1px solid #000; }
   }
 
   .filters{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:14px; font-size:0.82rem; color:var(--ink-soft); }
@@ -192,23 +204,24 @@
 <main>
   <!-- ───────────────────────── Remittance ledger ───────────────────────── -->
   <section class="panel active" id="panel-ledger">
+    <div id="completeness"></div>
     <div class="stats" id="ledgerStats"></div>
 
-    <div class="note" id="splitNote">
-      <strong>Québec splits your remittances two ways.</strong> Federal income tax and EI (employee + employer)
-      go to the <b>CRA</b>. QPP, QPIP and Québec income tax go to <b>Revenu Québec</b> — they are
-      <em>not</em> part of your CRA remittance. Both ledgers are below.
+    <div class="note">
+      <strong>Québec splits your remittances two ways.</strong> Federal income tax and EI
+      (employee + employer) go to the <b>CRA</b>. QPP, QPIP and Québec income tax go to
+      <b>Revenu Québec</b> — they are <em>not</em> part of your CRA remittance. Both ledgers are below.
     </div>
 
     <div class="section-head">
-      <h2>CRA remittance</h2><span class="tag cra" id="remitterTag">Regular remitter</span>
+      <h2>CRA remittance</h2><span class="tag cra" id="craRemitterTag">Regular</span>
       <div class="rule"></div>
       <span class="count" id="craCount"></span>
     </div>
     <div id="craLedger"></div>
 
     <div class="section-head">
-      <h2>Revenu Québec remittance</h2><span class="tag rq">Provincial</span>
+      <h2>Revenu Québec remittance</h2><span class="tag rq" id="rqRemitterTag">Regular</span>
       <div class="rule"></div>
       <span class="count" id="rqCount"></span>
     </div>
@@ -218,7 +231,7 @@
     <div class="card"><div class="table-wrap"><table id="yearTotals"></table></div></div>
 
     <div class="btn-row">
-      <button class="btn" id="exportCraBtn">Export CRA ledger (CSV)</button>
+      <button class="btn" id="exportCraBtn">Export remittance ledger (CSV)</button>
       <button class="btn" id="exportPeriodsBtn">Export pay periods (CSV)</button>
       <button class="btn" id="printLedgerBtn">Print ledger</button>
     </div>
@@ -226,11 +239,10 @@
 
   <!-- ───────────────────────────── Paystubs ───────────────────────────── -->
   <section class="panel" id="panel-stubs">
+    <div id="stubCompleteness"></div>
     <div class="filters">
       <label for="stubFilter">Show</label>
-      <select id="stubFilter">
-        <option value="all">All 26 pay periods</option>
-      </select>
+      <select id="stubFilter"><option value="all">All pay periods</option></select>
       <button class="btn small" id="printAllBtn">Print all</button>
     </div>
     <div id="stubList"></div>
@@ -238,10 +250,11 @@
 
   <!-- ───────────────────────────── Settings ───────────────────────────── -->
   <section class="panel" id="panel-settings">
-    <div class="note calm">
-      Everything here is computed from these inputs — nothing is stored on a server.
-      Values are saved in this browser only. The defaults are taken from your CRA
-      Payroll Deductions Online Calculator (PDOC) result for the 2026-02-20 pay.
+    <div class="note">
+      Everything is computed from these inputs — nothing is stored on a server, and values
+      are saved in this browser only. <strong>The only figure carried over from the source
+      screenshot is the $2,310.00 biweekly salary.</strong> The statutory rates below come
+      from the published 2026 tables; income tax must be supplied by you.
     </div>
 
     <form id="cfgForm">
@@ -261,72 +274,113 @@
         <div class="field-grid">
           <div class="field"><label for="yearStart">Employment start</label><input id="yearStart" name="yearStart" type="date"></div>
           <div class="field"><label for="firstPayDate">First pay date</label><input id="firstPayDate" name="firstPayDate" type="date"></div>
-          <div class="field"><label for="periods">Pay periods / year</label><input id="periods" name="periods" type="number" min="1" max="53" step="1"></div>
+          <div class="field"><label for="payFrequency">Pay frequency</label>
+            <select id="payFrequency" name="payFrequency">
+              <option value="weekly">Weekly — 52 periods</option>
+              <option value="biweekly">Biweekly — 26 periods</option>
+              <option value="semimonthly">Semi-monthly — 24 periods</option>
+              <option value="monthly">Monthly — 12 periods</option>
+            </select>
+          </div>
           <div class="field"><label for="periodEndOffsetDays">Period ends (days before pay)</label><input id="periodEndOffsetDays" name="periodEndOffsetDays" type="number" min="0" max="30" step="1"></div>
-          <div class="field full"><label for="remitterType">CRA remitter type</label>
-            <select id="remitterType" name="remitterType">
-              <option value="regular">Regular — due the 15th of the following month</option>
-              <option value="quarterly">Quarterly — due the 15th after each quarter</option>
+          <div class="field"><label for="craRemitterType">CRA remitter frequency</label>
+            <select id="craRemitterType" name="craRemitterType">
+              <option value="regular">Monthly — due the 15th of the next month</option>
+              <option value="quarterly">Quarterly — due the 15th after quarter end</option>
+            </select>
+          </div>
+          <div class="field"><label for="rqRemitterType">RQ remitter frequency</label>
+            <select id="rqRemitterType" name="rqRemitterType">
+              <option value="regular">Monthly — due the 15th of the next month</option>
+              <option value="quarterly">Quarterly — due the 15th after quarter end</option>
             </select>
           </div>
         </div>
-        <p class="hint">Biweekly = every 14 days from the first pay date. New employers are regular (monthly) remitters by default; quarterly is only available once the CRA grants it.</p>
-      </div>
-
-      <div class="section-head"><h2>Pay &amp; income tax</h2><div class="rule"></div></div>
-      <div class="card">
-        <div class="field-grid">
-          <div class="field"><label for="grossPerPeriod">Salary per period ($)</label><input id="grossPerPeriod" name="grossPerPeriod" type="number" step="0.01" min="0"></div>
-          <div class="field"><label for="federalTaxPerPeriod">Federal tax per period ($)</label><input id="federalTaxPerPeriod" name="federalTaxPerPeriod" type="number" step="0.01" min="0"></div>
-          <div class="field"><label for="quebecTaxPerPeriod">Québec tax per period ($)</label><input id="quebecTaxPerPeriod" name="quebecTaxPerPeriod" type="number" step="0.01" min="0"></div>
-          <div class="field"><label for="federalTD1">Federal TD1 claim ($)</label><input id="federalTD1" name="federalTD1" type="number" step="0.01" min="0"></div>
-        </div>
         <p class="hint">
-          Salary is fixed per period regardless of hours worked. Income tax is a flat per-period
-          amount because the salary and TD1 claim don't change during the year.
-          <strong>PDOC does not calculate Québec provincial tax</strong> — get it from Revenu Québec's
-          WebRAS and enter it above, otherwise the Québec column stays at zero.
+          The period count follows the frequency, so the pay calendar can't drift out of step with it.
+          The CRA and Revenu Québec each assign your remitter frequency independently — they are
+          often but not always the same, so they're set separately here.
+          Due dates roll forward off weekends; <strong>statutory holidays are not in the table</strong>,
+          so check a due date that lands on one.
         </p>
       </div>
 
-      <div class="section-head"><h2>Statutory rates</h2><div class="rule"></div></div>
+      <div class="section-head"><h2>Salary</h2><div class="rule"></div></div>
+      <div class="card">
+        <div class="field-grid">
+          <div class="field full"><label for="grossPerPeriod">Salary per period ($)</label><input id="grossPerPeriod" name="grossPerPeriod" type="number" step="0.01" min="0"></div>
+        </div>
+        <p class="hint">A fixed amount each period regardless of hours worked. This is the one figure
+          taken from the source screenshot.</p>
+      </div>
+
+      <div class="section-head"><h2>Income tax — you must supply these</h2><div class="rule"></div></div>
+      <div class="card">
+        <div class="field-grid">
+          <div class="field"><label for="federalTaxPerPeriod">Federal tax per period ($)</label><input id="federalTaxPerPeriod" name="federalTaxPerPeriod" type="number" step="0.01" min="0"></div>
+          <div class="field"><label for="quebecTaxPerPeriod">Québec tax per period ($)</label><input id="quebecTaxPerPeriod" name="quebecTaxPerPeriod" type="number" step="0.01" min="0"></div>
+          <div class="field full"><label for="taxBasisGross">Salary these tax figures were calculated for ($)</label><input id="taxBasisGross" name="taxBasisGross" type="number" step="0.01" min="0"></div>
+        </div>
+        <p class="hint">
+          Income tax depends on the whole TD1/TP-1015.3-V picture, not on a rate this page could
+          apply, so it is <strong>not</strong> calculated here. Get the federal amount from the CRA's
+          <strong>PDOC</strong> and the Québec amount from Revenu Québec's <strong>WebRAS</strong>,
+          then enter both. Record the salary you ran them at — if the salary later changes, the ledger
+          will tell you the tax figures have gone stale instead of quietly reusing them.
+        </p>
+      </div>
+
+      <div class="section-head"><h2>Statutory rates — published 2026 tables</h2><div class="rule"></div></div>
       <div class="card">
         <div class="field-grid">
           <div class="field"><label for="qppRatePct">QPP rate (%)</label><input id="qppRatePct" name="qppRatePct" type="number" step="0.001" min="0"></div>
           <div class="field"><label for="qppExemptionAnnual">QPP basic exemption ($/yr)</label><input id="qppExemptionAnnual" name="qppExemptionAnnual" type="number" step="1" min="0"></div>
-          <div class="field"><label for="eiRatePct">EI employee rate (%)</label><input id="eiRatePct" name="eiRatePct" type="number" step="0.001" min="0"></div>
+          <div class="field"><label for="ympe">QPP max pensionable ($)</label><input id="ympe" name="ympe" type="number" step="1" min="0"></div>
+          <div class="field"><label for="qpp2RatePct">QPP2 rate (%)</label><input id="qpp2RatePct" name="qpp2RatePct" type="number" step="0.001" min="0"></div>
+          <div class="field"><label for="yampe">QPP2 max pensionable ($)</label><input id="yampe" name="yampe" type="number" step="1" min="0"></div>
+          <div class="field"><label for="eiRatePct">EI employee rate, QC (%)</label><input id="eiRatePct" name="eiRatePct" type="number" step="0.001" min="0"></div>
           <div class="field"><label for="eiEmployerMultiplier">EI employer multiplier</label><input id="eiEmployerMultiplier" name="eiEmployerMultiplier" type="number" step="0.01" min="0"></div>
+          <div class="field"><label for="eiMie">EI max insurable ($)</label><input id="eiMie" name="eiMie" type="number" step="1" min="0"></div>
           <div class="field"><label for="qpipEmployeeRatePct">QPIP employee rate (%)</label><input id="qpipEmployeeRatePct" name="qpipEmployeeRatePct" type="number" step="0.001" min="0"></div>
           <div class="field"><label for="qpipEmployerRatePct">QPIP employer rate (%)</label><input id="qpipEmployerRatePct" name="qpipEmployerRatePct" type="number" step="0.001" min="0"></div>
+          <div class="field full"><label for="qpipMax">QPIP max insurable ($)</label><input id="qpipMax" name="qpipMax" type="number" step="1" min="0"></div>
         </div>
         <p class="hint">
-          QPP and EI rates are derived from your PDOC result and reproduce it to the cent.
-          <strong>QPIP (RQAP) is not shown by PDOC</strong>, so it defaults to 0 — enter the current
-          Revenu Québec rates to include it in the provincial remittance.
+          The EI rate is the <strong>reduced Québec rate</strong> — Québec employees pay less because
+          QPIP covers parental benefits. All of these change every year: re-check them each January.
         </p>
       </div>
 
-      <div class="section-head"><h2>Annual maximums</h2><div class="rule"></div></div>
+      <div class="section-head"><h2>Employer contributions beyond the payroll deductions</h2><div class="rule"></div></div>
       <div class="card">
         <div class="field-grid">
-          <div class="field"><label for="ympe">QPP max pensionable ($)</label><input id="ympe" name="ympe" type="number" step="1" min="0"></div>
-          <div class="field"><label for="eiMie">EI max insurable ($)</label><input id="eiMie" name="eiMie" type="number" step="1" min="0"></div>
-          <div class="field full"><label for="qpipMax">QPIP max insurable ($)</label><input id="qpipMax" name="qpipMax" type="number" step="1" min="0"></div>
+          <div class="field full"><label for="hsfRatePct">Health Services Fund rate (%)</label><input id="hsfRatePct" name="hsfRatePct" type="number" step="0.001" min="0"></div>
         </div>
-        <p class="hint" id="capsHint"></p>
+        <p class="hint">
+          Québec employers also owe a <strong>Health Services Fund (FSS)</strong> contribution on total
+          payroll, remitted to Revenu Québec alongside the source deductions. Your rate depends on your
+          total payroll and your sector, so it is left at zero until you enter it — it is
+          <em>not</em> included in the totals while it is blank.
+          <strong>CNESST</strong> is separate again: it's an insurance premium, not a source deduction,
+          and is not tracked on this page.
+        </p>
+      </div>
+
+      <div class="section-head"><h2>Rate self-check</h2><div class="rule"></div></div>
+      <div class="card">
+        <p class="hint" style="margin-top:0;">
+          Confirms the rates and ceilings above agree with each other — that the maximum a
+          full-year employee could contribute is what the published tables say it is. This checks
+          internal consistency, not whether the rates themselves are current.
+        </p>
+        <div class="table-wrap"><table id="rateCheck"></table></div>
       </div>
 
       <div class="btn-row">
         <button type="submit" class="btn primary">Save</button>
-        <button type="button" class="btn" id="resetBtn">Reset to PDOC defaults</button>
+        <button type="button" class="btn" id="resetBtn">Reset to 2026 defaults</button>
       </div>
     </form>
-
-    <div class="section-head"><h2>Source check</h2><div class="rule"></div></div>
-    <div class="card">
-      <p class="hint" style="margin-top:0;">Recomputed for the pay date on your PDOC screenshot, compared against it line by line.</p>
-      <div class="table-wrap"><table id="reconTable"></table></div>
-    </div>
   </section>
 </main>
 
@@ -348,15 +402,23 @@
 <script>
 'use strict';
 
-/* ── Defaults ──────────────────────────────────────────────────────────────
- * Taken from the CRA Payroll Deductions Online Calculator result for the
- * 2026-02-20 pay: Québec, biweekly (26 periods), $2,310.00 salary,
- * federal TD1 $16,452.00 → federal tax 170.66, QPP 137.05, EI 30.03,
- * total deductions 337.74, net 1,972.26.
+/* ── What is and isn't known ───────────────────────────────────────────────
+ * The ONLY figure carried over from the source screenshot is the $2,310.00
+ * biweekly salary. Everything the screenshot showed downstream of it — the
+ * income tax, the contributions, the net — is treated as unverified and is
+ * either recomputed from published rates or required as an input.
  *
- * The QPP and EI rates below are the ones that reproduce those figures exactly:
- *   EI  : 2310.00 × 1.30%                        = 30.03
- *   QPP : (2310.00 − 3500/26) × 6.30%            = 137.05
+ * Statutory rates below are the published 2026 tables:
+ *   QPP   6.30% employee (5.3% base + 1.0% first additional), $3,500 basic
+ *         exemption, $74,600 max pensionable; second additional 4.00%
+ *         employee on earnings between $74,600 and $85,000.
+ *   EI    1.30% employee — the REDUCED QUÉBEC RATE — on max insurable
+ *         $68,900; employer 1.4x (1.82%).
+ *   QPIP  0.430% employee / 0.602% employer on max insurable $103,000.
+ *
+ * Income tax is deliberately NOT computed. It depends on the full
+ * TD1/TP-1015.3-V picture, so it is an input sourced from PDOC (federal)
+ * and WebRAS (Québec), and stays at zero — loudly — until supplied.
  * ------------------------------------------------------------------------ */
 var DEFAULTS = {
   employeeName: '', employerName: '', employerAddress: '',
@@ -364,40 +426,57 @@ var DEFAULTS = {
 
   yearStart: '2026-01-01',
   firstPayDate: '2026-01-09',
-  periods: 26,
+  payFrequency: 'biweekly',
   periodEndOffsetDays: 0,
-  remitterType: 'regular',
+  craRemitterType: 'regular',
+  rqRemitterType: 'regular',
 
   grossPerPeriod: 2310.00,
-  federalTaxPerPeriod: 170.66,
-  quebecTaxPerPeriod: 0.00,
-  federalTD1: 16452.00,
+
+  federalTaxPerPeriod: 0,
+  quebecTaxPerPeriod: 0,
+  taxBasisGross: 0,
 
   qppRatePct: 6.30,
   qppExemptionAnnual: 3500,
+  ympe: 74600,
+  qpp2RatePct: 4.00,
+  yampe: 85000,
+
   eiRatePct: 1.30,
   eiEmployerMultiplier: 1.4,
-  qpipEmployeeRatePct: 0,
-  qpipEmployerRatePct: 0,
+  eiMie: 68900,
 
-  ympe: 73200,
-  eiMie: 68500,
-  qpipMax: 98000
+  qpipEmployeeRatePct: 0.430,
+  qpipEmployerRatePct: 0.602,
+  qpipMax: 103000,
+
+  hsfRatePct: 0
 };
 
-/* The figures on the PDOC screenshot, used for the reconciliation table. */
-var SOURCE = {
-  payDate: '2026-02-20',
-  gross: 2310.00, federalTax: 170.66, provincialTax: 0.00,
-  qpp: 137.05, qpp2: 0.00, ei: 30.03, totalDeductions: 337.74, net: 1972.26
+/* Published 2026 maximums, used only to self-check the rates against the
+ * ceilings — not to compute anything. */
+var PUBLISHED_2026 = {
+  qppMaxEmployee: 4479.30,   /* (74,600 − 3,500) × 6.30% */
+  qpp2MaxEmployee: 416.00,   /* (85,000 − 74,600) × 4.00% */
+  eiMaxEmployee: 895.70,     /* 68,900 × 1.30% */
+  qpipMaxEmployee: 442.90    /* 103,000 × 0.430% */
 };
 
-var CFG_KEY = 'payroll.cfg.v1';
-var REMIT_KEY = 'payroll.remitted.v1';
+var FREQ = {
+  weekly:      { periods: 52, label: 'Weekly',       step: 7 },
+  biweekly:    { periods: 26, label: 'Biweekly',     step: 14 },
+  semimonthly: { periods: 24, label: 'Semi-monthly', step: 0 },
+  monthly:     { periods: 12, label: 'Monthly',      step: 0 }
+};
 
-var NUMERIC = ['periods','periodEndOffsetDays','grossPerPeriod','federalTaxPerPeriod','quebecTaxPerPeriod',
-  'federalTD1','qppRatePct','qppExemptionAnnual','eiRatePct','eiEmployerMultiplier',
-  'qpipEmployeeRatePct','qpipEmployerRatePct','ympe','eiMie','qpipMax'];
+var CFG_KEY = 'payroll.cfg.v2';
+var REMIT_KEY = 'payroll.remitted.v2';
+
+var NUMERIC = ['periodEndOffsetDays','grossPerPeriod','federalTaxPerPeriod','quebecTaxPerPeriod',
+  'taxBasisGross','qppRatePct','qppExemptionAnnual','ympe','qpp2RatePct','yampe',
+  'eiRatePct','eiEmployerMultiplier','eiMie',
+  'qpipEmployeeRatePct','qpipEmployerRatePct','qpipMax','hsfRatePct'];
 
 /* ── Small helpers ──────────────────────────────────────────────────────── */
 function round2(n){ return Math.round((n + Number.EPSILON) * 100) / 100; }
@@ -410,10 +489,13 @@ function toISO(d){ return d.toISOString().slice(0,10); }
 function addDays(d, n){ return new Date(d.getTime() + n*86400000); }
 function monthKey(d){ return toISO(d).slice(0,7); }
 function longDate(d){ return d.toLocaleDateString('en-CA', {timeZone:'UTC', year:'numeric', month:'long', day:'numeric'}); }
-function monthName(key){
-  return parseISO(key + '-01').toLocaleDateString('en-CA', {timeZone:'UTC', year:'numeric', month:'long'});
+function monthName(key){ return parseISO(key + '-01').toLocaleDateString('en-CA', {timeZone:'UTC', year:'numeric', month:'long'}); }
+/** Today as a UTC calendar date, so due-date comparisons don't flip a day early. */
+function todayUTC(){
+  var n = new Date();
+  return new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()));
 }
-/** Weekend due dates roll forward to the Monday. */
+/** Weekend due dates roll forward to the Monday. Statutory holidays are NOT handled. */
 function nextBusinessDay(d){
   var day = d.getUTCDay();
   if (day === 6) return addDays(d, 2);
@@ -425,6 +507,7 @@ function esc(s){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
   });
 }
+function freqOf(cfg){ return FREQ[cfg.payFrequency] || FREQ.biweekly; }
 
 /* ── Config ────────────────────────────────────────────────────────────── */
 function loadCfg(){
@@ -433,97 +516,168 @@ function loadCfg(){
   try {
     var saved = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
     Object.keys(DEFAULTS).forEach(function(k){
-      if (saved[k] !== undefined && saved[k] !== null && saved[k] !== '') cfg[k] = saved[k];
+      /* 0 and '' are meaningful for the supply-it-yourself fields, so only
+         undefined/null fall back to the default. */
+      if (saved[k] !== undefined && saved[k] !== null) cfg[k] = saved[k];
     });
   } catch (e) { /* fall back to defaults */ }
   NUMERIC.forEach(function(k){ cfg[k] = Number(cfg[k]) || 0; });
+  if (!FREQ[cfg.payFrequency]) cfg.payFrequency = 'biweekly';
   return cfg;
 }
 function saveCfg(cfg){ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }
-
 function loadRemitted(){
   try { return JSON.parse(localStorage.getItem(REMIT_KEY) || '{}'); } catch (e) { return {}; }
 }
 function saveRemitted(m){ localStorage.setItem(REMIT_KEY, JSON.stringify(m)); }
 
+/* ── Completeness ──────────────────────────────────────────────────────────
+ * What the ledger cannot know. Surfaced everywhere a number is acted on,
+ * not just on the settings screen: a zero in a remittance ledger reads as
+ * "nothing owed", and that is how an under-remittance happens.
+ * ----------------------------------------------------------------------- */
+function gaps(cfg){
+  var out = [];
+  if (cfg.federalTaxPerPeriod <= 0)
+    out.push({ agency:'CRA', text:'Federal income tax is not entered — run PDOC and enter the per-period amount.' });
+  if (cfg.quebecTaxPerPeriod <= 0)
+    out.push({ agency:'RQ', text:'Québec income tax is not entered — run WebRAS and enter the per-period amount.' });
+  if (cfg.hsfRatePct <= 0)
+    out.push({ agency:'RQ', text:'Health Services Fund (FSS) rate is not entered, so no employer FSS contribution is included.' });
+  if (cfg.taxBasisGross > 0 && round2(cfg.taxBasisGross) !== round2(cfg.grossPerPeriod))
+    out.push({ agency:'both', text:'Income tax was calculated for a salary of ' + money(cfg.taxBasisGross)
+      + ' per period but the salary is now ' + money(cfg.grossPerPeriod)
+      + ' — re-run PDOC and WebRAS, the tax amounts are stale.' });
+  return out;
+}
+function gapsFor(cfg, agency){
+  return gaps(cfg).filter(function(g){ return g.agency === agency || g.agency === 'both'; });
+}
+
 /* ── Payroll engine ────────────────────────────────────────────────────────
  * One pass over the pay dates, carrying year-to-date figures so the annual
- * QPP / EI / QPIP maximums stop contributions at the right period if the
- * salary is ever raised above a ceiling.
+ * QPP / QPP2 / EI / QPIP maximums stop contributions at the right period.
  * ----------------------------------------------------------------------- */
-function buildPeriods(cfg){
+/* Pay dates for ONE tax year. Deductions are reported in the tax year of the
+ * pay date, so a schedule that runs past December 31 belongs to the next year's
+ * ledger, not this one — generate up to the year end and stop. How many pays
+ * that yields depends on the first pay date (a weekly payroll starting
+ * 2026-01-09 has 51 pay dates in 2026, not 52). */
+function payDatesFor(cfg){
   var first = parseISO(cfg.firstPayDate);
-  var start = parseISO(cfg.yearStart);
-  var exemptionPerPeriod = cfg.periods > 0 ? cfg.qppExemptionAnnual / cfg.periods : 0;
-  var qppMax = round2(Math.max(0, cfg.ympe - cfg.qppExemptionAnnual) * cfg.qppRatePct / 100);
+  var f = freqOf(cfg);
+  var taxYear = first.getUTCFullYear();
+  var out = [], i, d;
+  var limit = f.periods + 2;
+  if (f.step > 0){
+    for (i = 0; i < limit; i++){
+      d = addDays(first, i * f.step);
+      if (d.getUTCFullYear() !== taxYear) break;
+      out.push(d);
+    }
+  } else if (cfg.payFrequency === 'semimonthly'){
+    var m = first.getUTCMonth();
+    for (i = 0; i < limit; i++){
+      var mo = m + Math.floor(i / 2);
+      d = i % 2 === 0 ? new Date(Date.UTC(taxYear, mo, 15)) : new Date(Date.UTC(taxYear, mo + 1, 0));
+      if (d.getUTCFullYear() !== taxYear) break;
+      out.push(d);
+    }
+  } else {
+    var m2 = first.getUTCMonth();
+    for (i = 0; i < limit; i++){
+      d = new Date(Date.UTC(taxYear, m2 + i + 1, 0));
+      if (d.getUTCFullYear() !== taxYear) break;
+      out.push(d);
+    }
+  }
+  return out;
+}
 
-  var ytd = { gross:0, pensionable:0, qpp:0, qppEr:0, insurable:0, ei:0, eiEr:0,
-              qpipInsurable:0, qpip:0, qpipEr:0, fed:0, qc:0, deductions:0, net:0 };
+function buildPeriods(cfg){
+  var f = freqOf(cfg);
+  var dates = payDatesFor(cfg);
+  var start = parseISO(cfg.yearStart);
+  var exemptionPerPeriod = f.periods > 0 ? cfg.qppExemptionAnnual / f.periods : 0;
+  var qppMax = round2(Math.max(0, cfg.ympe - cfg.qppExemptionAnnual) * cfg.qppRatePct / 100);
+  var qpp2Max = round2(Math.max(0, cfg.yampe - cfg.ympe) * cfg.qpp2RatePct / 100);
+
+  var ytd = { gross:0, pensionable:0, qpp:0, qppEr:0, qpp2:0, qpp2Er:0, insurable:0, ei:0, eiEr:0,
+              qpipInsurable:0, qpip:0, qpipEr:0, hsf:0, fed:0, qc:0, deductions:0, net:0 };
   var rows = [];
 
-  for (var i = 0; i < cfg.periods; i++){
-    var payDate = addDays(first, i * 14);
+  for (var i = 0; i < dates.length; i++){
+    var payDate = dates[i];
     var periodEnd = addDays(payDate, -cfg.periodEndOffsetDays);
-    var periodStart = addDays(periodEnd, -13);
+    /* Periods run back to the previous period's end, whatever the frequency. */
+    var periodStart = i === 0 ? start : addDays(addDays(dates[i-1], -cfg.periodEndOffsetDays), 1);
     if (periodStart < start) periodStart = start;
 
     var gross = round2(cfg.grossPerPeriod);
 
-    /* QPP — pensionable earnings capped at the YMPE, less the per-period exemption. */
+    /* QPP first tier — pensionable capped at the YMPE, less the prorated exemption. */
     var pensionable = Math.max(0, Math.min(gross, cfg.ympe - ytd.pensionable));
     var contributory = Math.max(0, pensionable - exemptionPerPeriod);
     var qpp = round2(contributory * cfg.qppRatePct / 100);
     if (ytd.qpp + qpp > qppMax) qpp = round2(Math.max(0, qppMax - ytd.qpp));
-    var qppEr = qpp; /* employer matches the employee contribution */
 
-    /* EI — insurable earnings capped at the maximum insurable earnings. */
+    /* QPP second tier — only on earnings between the YMPE and the YAMPE. */
+    var priorPensionable = ytd.pensionable;
+    var tier2Base = Math.max(0, Math.min(priorPensionable + gross, cfg.yampe) - Math.max(priorPensionable, cfg.ympe));
+    var qpp2 = round2(tier2Base * cfg.qpp2RatePct / 100);
+    if (ytd.qpp2 + qpp2 > qpp2Max) qpp2 = round2(Math.max(0, qpp2Max - ytd.qpp2));
+
+    /* EI — insurable capped at the maximum insurable earnings. */
     var insurable = Math.max(0, Math.min(gross, cfg.eiMie - ytd.insurable));
     var ei = round2(insurable * cfg.eiRatePct / 100);
     var eiEr = round2(ei * cfg.eiEmployerMultiplier);
 
-    /* QPIP (RQAP) — zero unless rates are entered in settings. */
+    /* QPIP — its own, higher ceiling. */
     var qpipInsurable = Math.max(0, Math.min(gross, cfg.qpipMax - ytd.qpipInsurable));
     var qpip = round2(qpipInsurable * cfg.qpipEmployeeRatePct / 100);
     var qpipEr = round2(qpipInsurable * cfg.qpipEmployerRatePct / 100);
 
+    /* Employer Health Services Fund, on total payroll, if a rate is set. */
+    var hsf = round2(gross * cfg.hsfRatePct / 100);
+
     var fed = round2(cfg.federalTaxPerPeriod);
     var qc = round2(cfg.quebecTaxPerPeriod);
-    var deductions = round2(fed + qc + qpp + ei + qpip);
+    var deductions = round2(fed + qc + qpp + qpp2 + ei + qpip);
     var net = round2(gross - deductions);
 
     ytd.gross = round2(ytd.gross + gross);
     ytd.pensionable = round2(ytd.pensionable + pensionable);
-    ytd.qpp = round2(ytd.qpp + qpp);
-    ytd.qppEr = round2(ytd.qppEr + qppEr);
+    ytd.qpp = round2(ytd.qpp + qpp);       ytd.qppEr = round2(ytd.qppEr + qpp);
+    ytd.qpp2 = round2(ytd.qpp2 + qpp2);    ytd.qpp2Er = round2(ytd.qpp2Er + qpp2);
     ytd.insurable = round2(ytd.insurable + insurable);
-    ytd.ei = round2(ytd.ei + ei);
-    ytd.eiEr = round2(ytd.eiEr + eiEr);
+    ytd.ei = round2(ytd.ei + ei);          ytd.eiEr = round2(ytd.eiEr + eiEr);
     ytd.qpipInsurable = round2(ytd.qpipInsurable + qpipInsurable);
-    ytd.qpip = round2(ytd.qpip + qpip);
-    ytd.qpipEr = round2(ytd.qpipEr + qpipEr);
-    ytd.fed = round2(ytd.fed + fed);
-    ytd.qc = round2(ytd.qc + qc);
+    ytd.qpip = round2(ytd.qpip + qpip);    ytd.qpipEr = round2(ytd.qpipEr + qpipEr);
+    ytd.hsf = round2(ytd.hsf + hsf);
+    ytd.fed = round2(ytd.fed + fed);       ytd.qc = round2(ytd.qc + qc);
     ytd.deductions = round2(ytd.deductions + deductions);
     ytd.net = round2(ytd.net + net);
 
     rows.push({
       n: i + 1, payDate: payDate, periodStart: periodStart, periodEnd: periodEnd,
-      gross: gross, fed: fed, qc: qc, qpp: qpp, qppEr: qppEr, ei: ei, eiEr: eiEr,
-      qpip: qpip, qpipEr: qpipEr, deductions: deductions, net: net,
+      gross: gross, fed: fed, qc: qc,
+      qpp: qpp, qppEr: qpp, qpp2: qpp2, qpp2Er: qpp2,
+      ei: ei, eiEr: eiEr, qpip: qpip, qpipEr: qpipEr, hsf: hsf,
+      deductions: deductions, net: net,
       cra: round2(fed + ei + eiEr),
-      rq: round2(qc + qpp + qppEr + qpip + qpipEr),
+      rq: round2(qc + qpp + qpp + qpp2 + qpp2 + qpip + qpipEr + hsf),
       ytd: JSON.parse(JSON.stringify(ytd))
     });
   }
   return rows;
 }
 
-/** Group pay periods into remittance buckets by the month (or quarter) they were paid in. */
-function buildRemittances(rows, cfg){
+/** Group pay periods into remittance buckets by the date the employee was PAID. */
+function buildRemittances(rows, remitterType){
   var buckets = {}, order = [];
   rows.forEach(function(r){
     var key;
-    if (cfg.remitterType === 'quarterly'){
+    if (remitterType === 'quarterly'){
       var q = Math.floor(r.payDate.getUTCMonth() / 3);
       key = r.payDate.getUTCFullYear() + '-Q' + (q + 1);
     } else {
@@ -538,9 +692,8 @@ function buildRemittances(rows, cfg){
     var sum = function(f){ return round2(b.rows.reduce(function(a, r){ return a + r[f]; }, 0)); };
     var last = b.rows[b.rows.length - 1].payDate;
     var due;
-    if (cfg.remitterType === 'quarterly'){
-      var qEndMonth = Math.floor(last.getUTCMonth() / 3) * 3 + 3; /* month after quarter end */
-      due = new Date(Date.UTC(last.getUTCFullYear(), qEndMonth, 15));
+    if (remitterType === 'quarterly'){
+      due = new Date(Date.UTC(last.getUTCFullYear(), Math.floor(last.getUTCMonth() / 3) * 3 + 3, 15));
     } else {
       due = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth() + 1, 15));
     }
@@ -548,57 +701,74 @@ function buildRemittances(rows, cfg){
 
     return {
       key: key,
-      label: cfg.remitterType === 'quarterly'
-        ? key.replace('-Q', ' — Q')
-        : monthName(key),
-      rows: b.rows,
-      due: due,
+      label: remitterType === 'quarterly' ? key.replace('-Q', ' — Q') : monthName(key),
+      rows: b.rows, due: due,
       gross: sum('gross'), fed: sum('fed'), qc: sum('qc'),
-      qpp: sum('qpp'), qppEr: sum('qppEr'), ei: sum('ei'), eiEr: sum('eiEr'),
-      qpip: sum('qpip'), qpipEr: sum('qpipEr'),
+      qpp: sum('qpp'), qppEr: sum('qppEr'), qpp2: sum('qpp2'), qpp2Er: sum('qpp2Er'),
+      ei: sum('ei'), eiEr: sum('eiEr'),
+      qpip: sum('qpip'), qpipEr: sum('qpipEr'), hsf: sum('hsf'),
       cra: sum('cra'), rq: sum('rq')
     };
   });
 }
 
 /* ── Rendering ─────────────────────────────────────────────────────────── */
-var cfg, periods, remittances, remitted;
+var cfg, periods, craRemits, rqRemits, remitted;
 
 function recompute(){
   cfg = loadCfg();
   periods = buildPeriods(cfg);
-  remittances = buildRemittances(periods, cfg);
+  craRemits = buildRemittances(periods, cfg.craRemitterType);
+  rqRemits = buildRemittances(periods, cfg.rqRemitterType);
   remitted = loadRemitted();
 }
-
 function totalsRow(field){ return round2(periods.reduce(function(a, r){ return a + r[field]; }, 0)); }
+function remitsFor(which){ return which === 'cra' ? craRemits : rqRemits; }
+
+function completenessHtml(){
+  var g = gaps(cfg);
+  if (!g.length){
+    return '<div class="note"><strong>All inputs supplied.</strong> Income tax figures are in place '
+      + 'and the statutory rates are set. Re-check the rates each January.</div>';
+  }
+  return '<div class="note stop"><strong>These totals are incomplete — do not remit from them yet.</strong>'
+    + '<ul>' + g.map(function(x){
+        var who = x.agency === 'CRA' ? 'CRA' : (x.agency === 'RQ' ? 'Revenu Québec' : 'Both');
+        return '<li><b>' + who + ':</b> ' + esc(x.text) + '</li>';
+      }).join('') + '</ul></div>';
+}
 
 function renderStats(){
-  var craTotal = totalsRow('cra');
-  var rqTotal = totalsRow('rq');
-  var today = new Date();
-  var outstanding = remittances.reduce(function(a, m){
-    return a + (remitted[m.key + '::cra'] ? 0 : m.cra);
-  }, 0);
-  var nextDue = null;
-  for (var i = 0; i < remittances.length; i++){
-    if (!remitted[remittances[i].key + '::cra']){ nextDue = remittances[i]; break; }
-  }
+  var craTotal = totalsRow('cra'), rqTotal = totalsRow('rq');
+  var today = todayUTC();
 
-  var html = ''
-    + stat('CRA per pay', money(periods.length ? periods[0].cra : 0), 'fed tax + EI ee + EI er')
-    + stat('CRA for the year', money(craTotal), periods.length + ' pay periods')
-    + stat('Outstanding', money(round2(outstanding)), outstanding > 0 ? 'not yet marked remitted' : 'all caught up',
-        outstanding > 0 ? 'bad' : 'good')
+  /* Outstanding spans BOTH agencies — a CRA-only figure understates it badly. */
+  var outstanding = 0, nextDue = null;
+  [['cra', craRemits], ['rq', rqRemits]].forEach(function(pair){
+    pair[1].forEach(function(m){
+      if (remitted[m.key + '::' + pair[0]]) return;
+      var amt = pair[0] === 'cra' ? m.cra : m.rq;
+      outstanding += amt;
+      if (!nextDue || m.due < nextDue.due) nextDue = { due: m.due, label: m.label, amt: amt, who: pair[0] };
+    });
+  });
+
+  document.getElementById('ledgerStats').innerHTML = ''
+    + stat('Per pay — CRA', money(periods.length ? periods[0].cra : 0), 'fed tax + EI ee + EI er')
+    + stat('Per pay — Rev. Québec', money(periods.length ? periods[0].rq : 0), 'QC tax + QPP + QPIP')
+    + stat('Outstanding, both', money(round2(outstanding)),
+        outstanding > 0 ? 'CRA and RQ combined' : 'all caught up', outstanding > 0 ? 'bad' : 'good')
     + stat('Next due', nextDue ? longDate(nextDue.due) : '—',
-        nextDue ? nextDue.label + ' · ' + money(nextDue.cra) : 'nothing outstanding',
+        nextDue ? (nextDue.who === 'cra' ? 'CRA' : 'RQ') + ' · ' + nextDue.label + ' · ' + money(nextDue.amt) : 'nothing outstanding',
         nextDue && nextDue.due < today ? 'bad' : '');
-  document.getElementById('ledgerStats').innerHTML = html;
-  document.getElementById('remitterTag').textContent =
-    cfg.remitterType === 'quarterly' ? 'Quarterly remitter' : 'Regular remitter';
-  document.getElementById('craCount').textContent = remittances.length + ' remittances · ' + money(craTotal);
-  document.getElementById('rqCount').textContent = remittances.length + ' remittances · ' + money(rqTotal);
+
+  document.getElementById('craRemitterTag').textContent = cfg.craRemitterType === 'quarterly' ? 'Quarterly' : 'Monthly';
+  document.getElementById('rqRemitterTag').textContent = cfg.rqRemitterType === 'quarterly' ? 'Quarterly' : 'Monthly';
+  document.getElementById('craCount').textContent = craRemits.length + ' remittances · ' + money(craTotal);
+  document.getElementById('rqCount').textContent = rqRemits.length + ' remittances · ' + money(rqTotal);
   document.getElementById('yearPill').textContent = String(parseISO(cfg.firstPayDate).getUTCFullYear());
+  document.getElementById('completeness').innerHTML = completenessHtml();
+  document.getElementById('stubCompleteness').innerHTML = completenessHtml();
 }
 
 function stat(label, value, sub, cls){
@@ -609,24 +779,38 @@ function stat(label, value, sub, cls){
 
 function renderLedger(which){
   var isCra = which === 'cra';
-  var today = new Date();
-  var html = remittances.map(function(m){
+  var today = todayUTC();
+  var missing = gapsFor(cfg, isCra ? 'CRA' : 'RQ');
+
+  var html = remitsFor(which).map(function(m){
     var amount = isCra ? m.cra : m.rq;
     var done = !!remitted[m.key + '::' + which];
     var overdue = !done && m.due < today;
 
     var lines = isCra
-      ? [['Federal income tax', m.fed], ['EI — employee', m.ei], ['EI — employer', m.eiEr]]
-      : [['Québec income tax', m.qc], ['QPP — employee', m.qpp], ['QPP — employer', m.qppEr],
-         ['QPIP — employee', m.qpip], ['QPIP — employer', m.qpipEr]];
+      ? [['Federal income tax', m.fed, cfg.federalTaxPerPeriod <= 0],
+         ['EI — employee', m.ei, false],
+         ['EI — employer', m.eiEr, false]]
+      : [['Québec income tax', m.qc, cfg.quebecTaxPerPeriod <= 0],
+         ['QPP — employee', m.qpp, false],
+         ['QPP — employer', m.qppEr, false],
+         ['QPP2 — employee', m.qpp2, false],
+         ['QPP2 — employer', m.qpp2Er, false],
+         ['QPIP — employee', m.qpip, false],
+         ['QPIP — employer', m.qpipEr, false],
+         ['Health Services Fund', m.hsf, cfg.hsfRatePct <= 0]];
 
+    /* Zero rows that are zero because nothing was entered are marked, not hidden. */
     var body = '<div class="table-wrap"><table><thead><tr>'
       + '<th>Source deduction</th><th class="amt">Amount</th></tr></thead><tbody>'
       + lines.map(function(l){
-          return '<tr><td>' + esc(l[0]) + '</td><td class="amt">' + fmt(l[1]) + '</td></tr>';
+          return '<tr><td>' + esc(l[0]) + (l[2] ? ' <span class="missing">— not supplied</span>' : '') + '</td>'
+            + '<td class="amt' + (l[2] ? ' missing' : '') + '">' + fmt(l[1]) + '</td></tr>';
         }).join('')
-      + '<tr class="total"><td>Total remittance</td><td class="amt">' + fmt(amount) + '</td></tr>'
+      + '<tr class="total"><td>Total' + (missing.length ? ' so far' : '') + '</td>'
+      + '<td class="amt">' + fmt(amount) + '</td></tr>'
       + '</tbody></table></div>'
+      + (missing.length ? '<p class="hint missing">Incomplete: ' + missing.map(function(x){ return esc(x.text); }).join(' ') + '</p>' : '')
       + '<p class="hint">Covers ' + m.rows.length + ' pay ' + (m.rows.length === 1 ? 'date' : 'dates') + ': '
         + m.rows.map(function(r){ return toISO(r.payDate); }).join(', ')
         + ' · gross payroll ' + money(m.gross) + '</p>'
@@ -634,7 +818,9 @@ function renderLedger(which){
         + (done ? ' checked' : '') + '> Remitted</label>';
 
     return '<details class="month-entry' + (done ? ' remitted' : '') + (overdue ? ' overdue' : '') + '">'
-      + '<summary><div><div class="m-title">' + esc(m.label) + (done ? ' <span class="tag done">Paid</span>' : '') + '</div>'
+      + '<summary><div><div class="m-title">' + esc(m.label)
+        + (done ? ' <span class="tag done">Paid</span>' : '')
+        + (missing.length ? ' <span class="tag partial">Partial</span>' : '') + '</div>'
       + '<div class="m-sub">' + m.rows.length + ' pay ' + (m.rows.length === 1 ? 'date' : 'dates') + '</div></div>'
       + '<div class="m-amt num">' + money(amount)
       + '<span class="m-due">Due ' + toISO(m.due) + (overdue ? ' · overdue' : '') + '</span></div></summary>'
@@ -645,29 +831,37 @@ function renderLedger(which){
 }
 
 function renderYearTotals(){
+  var noFed = cfg.federalTaxPerPeriod <= 0, noQc = cfg.quebecTaxPerPeriod <= 0, noHsf = cfg.hsfRatePct <= 0;
   var rows = [
-    ['Gross salary', totalsRow('gross'), ''],
-    ['Federal income tax', totalsRow('fed'), 'CRA'],
-    ['EI — employee', totalsRow('ei'), 'CRA'],
-    ['EI — employer', totalsRow('eiEr'), 'CRA'],
-    ['Québec income tax', totalsRow('qc'), 'Revenu Québec'],
-    ['QPP — employee', totalsRow('qpp'), 'Revenu Québec'],
-    ['QPP — employer', totalsRow('qppEr'), 'Revenu Québec'],
-    ['QPIP — employee', totalsRow('qpip'), 'Revenu Québec'],
-    ['QPIP — employer', totalsRow('qpipEr'), 'Revenu Québec'],
-    ['Net pay to employee', totalsRow('net'), '']
+    ['Gross salary', totalsRow('gross'), '—', false],
+    ['Federal income tax', totalsRow('fed'), 'CRA', noFed],
+    ['EI — employee', totalsRow('ei'), 'CRA', false],
+    ['EI — employer', totalsRow('eiEr'), 'CRA', false],
+    ['Québec income tax', totalsRow('qc'), 'Revenu Québec', noQc],
+    ['QPP — employee', totalsRow('qpp'), 'Revenu Québec', false],
+    ['QPP — employer', totalsRow('qppEr'), 'Revenu Québec', false],
+    ['QPP2 — employee', totalsRow('qpp2'), 'Revenu Québec', false],
+    ['QPP2 — employer', totalsRow('qpp2Er'), 'Revenu Québec', false],
+    ['QPIP — employee', totalsRow('qpip'), 'Revenu Québec', false],
+    ['QPIP — employer', totalsRow('qpipEr'), 'Revenu Québec', false],
+    ['Health Services Fund', totalsRow('hsf'), 'Revenu Québec', noHsf],
+    ['Net pay to employee', totalsRow('net'), '—', noFed || noQc]
   ];
-  var html = '<thead><tr><th>Line</th><th>Remitted to</th><th class="amt">Year total</th></tr></thead><tbody>'
+  document.getElementById('yearTotals').innerHTML =
+    '<thead><tr><th>Line</th><th>Remitted to</th><th class="amt">Year total</th></tr></thead><tbody>'
     + rows.map(function(r){
-        return '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[2] || '—') + '</td>'
-          + '<td class="amt">' + fmt(r[1]) + '</td></tr>';
+        return '<tr><td>' + esc(r[0]) + (r[3] ? ' <span class="missing">— not supplied</span>' : '') + '</td>'
+          + '<td>' + esc(r[2]) + '</td><td class="amt' + (r[3] ? ' missing' : '') + '">' + fmt(r[1]) + '</td></tr>';
       }).join('')
     + '<tr class="total"><td>Total to CRA</td><td>CRA</td><td class="amt">' + fmt(totalsRow('cra')) + '</td></tr>'
     + '<tr class="total"><td>Total to Revenu Québec</td><td>Revenu Québec</td><td class="amt">' + fmt(totalsRow('rq')) + '</td></tr>'
     + '<tr class="total"><td>Total employer cost</td><td>—</td><td class="amt">'
-      + fmt(round2(totalsRow('gross') + totalsRow('eiEr') + totalsRow('qppEr') + totalsRow('qpipEr'))) + '</td></tr>'
+      + fmt(round2(totalsRow('gross') + totalsRow('eiEr') + totalsRow('qppEr') + totalsRow('qpp2Er')
+                   + totalsRow('qpipEr') + totalsRow('hsf'))) + '</td></tr>'
+    + (gaps(cfg).length
+        ? '<tr><td colspan="3" class="note-cell missing">Incomplete — see the notice at the top of the ledger.</td></tr>'
+        : '')
     + '</tbody>';
-  document.getElementById('yearTotals').innerHTML = html;
 }
 
 function renderStubs(){
@@ -678,33 +872,39 @@ function renderStubs(){
         return '<option value="' + r.n + '">#' + r.n + ' — ' + toISO(r.payDate) + '</option>';
       }).join('');
   filter.value = chosen;
-
   var shown = chosen === 'all' ? periods : periods.filter(function(r){ return String(r.n) === chosen; });
   document.getElementById('stubList').innerHTML = shown.map(stubHtml).join('');
 }
 
-function stubLine(label, current, ytd){
-  return '<tr><td>' + esc(label) + '</td><td class="amt">' + fmt(current) + '</td>'
-    + '<td class="amt">' + fmt(ytd) + '</td></tr>';
+function stubLine(label, current, ytd, flag){
+  return '<tr><td>' + esc(label) + (flag ? ' <span class="missing">*</span>' : '') + '</td>'
+    + '<td class="amt' + (flag ? ' missing' : '') + '">' + fmt(current) + '</td>'
+    + '<td class="amt' + (flag ? ' missing' : '') + '">' + fmt(ytd) + '</td></tr>';
 }
 
 function stubHtml(r){
   var employer = cfg.employerName || 'Employer';
   var employee = cfg.employeeName || 'Employee';
+  var g = gaps(cfg);
+  var noFed = cfg.federalTaxPerPeriod <= 0, noQc = cfg.quebecTaxPerPeriod <= 0;
 
+  /* Zero lines stay visible and flagged — a dropped line is invisible, and
+     invisible is exactly how an unsupplied figure gets forgotten. */
   var deductionLines = [
-    ['Federal income tax', r.fed, r.ytd.fed],
-    ['Québec income tax', r.qc, r.ytd.qc],
-    ['QPP', r.qpp, r.ytd.qpp],
-    ['EI', r.ei, r.ytd.ei]
+    ['Federal income tax', r.fed, r.ytd.fed, noFed],
+    ['Québec income tax', r.qc, r.ytd.qc, noQc],
+    ['QPP', r.qpp, r.ytd.qpp, false],
+    ['QPP2', r.qpp2, r.ytd.qpp2, false],
+    ['EI', r.ei, r.ytd.ei, false],
+    ['QPIP (RQAP)', r.qpip, r.ytd.qpip, false]
   ];
-  if (cfg.qpipEmployeeRatePct > 0) deductionLines.push(['QPIP (RQAP)', r.qpip, r.ytd.qpip]);
-
   var employerLines = [
-    ['QPP — employer', r.qppEr, r.ytd.qppEr],
-    ['EI — employer', r.eiEr, r.ytd.eiEr]
+    ['QPP — employer', r.qppEr, r.ytd.qppEr, false],
+    ['QPP2 — employer', r.qpp2Er, r.ytd.qpp2Er, false],
+    ['EI — employer', r.eiEr, r.ytd.eiEr, false],
+    ['QPIP — employer', r.qpipEr, r.ytd.qpipEr, false],
+    ['Health Services Fund', r.hsf, r.ytd.hsf, cfg.hsfRatePct <= 0]
   ];
-  if (cfg.qpipEmployerRatePct > 0) employerLines.push(['QPIP — employer', r.qpipEr, r.ytd.qpipEr]);
 
   return '<article class="stub" data-stub="' + r.n + '">'
     + '<div class="stub-head">'
@@ -715,7 +915,7 @@ function stubHtml(r){
         + 'Pay period <b>#' + r.n + ' of ' + periods.length + '</b><br>'
         + esc(toISO(r.periodStart)) + ' → ' + esc(toISO(r.periodEnd)) + '<br>'
         + 'Pay date <b>' + esc(toISO(r.payDate)) + '</b><br>'
-        + 'Biweekly · Québec'
+        + esc(freqOf(cfg).label) + ' · Québec'
       + '</div>'
     + '</div>'
 
@@ -723,20 +923,20 @@ function stubHtml(r){
       + '<div>'
         + '<h4>Earnings</h4>'
         + '<table><thead><tr><th>Description</th><th class="amt">Current</th><th class="amt">Year to date</th></tr></thead>'
-        + '<tbody>' + stubLine('Salary', r.gross, r.ytd.gross)
+        + '<tbody>' + stubLine('Salary', r.gross, r.ytd.gross, false)
         + '<tr class="total"><td>Gross pay</td><td class="amt">' + fmt(r.gross) + '</td>'
         + '<td class="amt">' + fmt(r.ytd.gross) + '</td></tr></tbody></table>'
 
-        + '<h4>Employer contributions</h4>'
+        + '<h4>Employer contributions (not deducted from pay)</h4>'
         + '<table><thead><tr><th>Description</th><th class="amt">Current</th><th class="amt">Year to date</th></tr></thead>'
-        + '<tbody>' + employerLines.map(function(l){ return stubLine(l[0], l[1], l[2]); }).join('')
+        + '<tbody>' + employerLines.map(function(l){ return stubLine(l[0], l[1], l[2], l[3]); }).join('')
         + '</tbody></table>'
       + '</div>'
 
       + '<div>'
         + '<h4>Deductions</h4>'
         + '<table><thead><tr><th>Description</th><th class="amt">Current</th><th class="amt">Year to date</th></tr></thead>'
-        + '<tbody>' + deductionLines.map(function(l){ return stubLine(l[0], l[1], l[2]); }).join('')
+        + '<tbody>' + deductionLines.map(function(l){ return stubLine(l[0], l[1], l[2], l[3]); }).join('')
         + '<tr class="total"><td>Total deductions</td><td class="amt">' + fmt(r.deductions) + '</td>'
         + '<td class="amt">' + fmt(r.ytd.deductions) + '</td></tr></tbody></table>'
 
@@ -744,11 +944,16 @@ function stubHtml(r){
         + '<table><tbody>'
         + '<tr><td>QPP pensionable (YTD)</td><td class="amt">' + fmt(r.ytd.pensionable) + '</td></tr>'
         + '<tr><td>EI insurable (YTD)</td><td class="amt">' + fmt(r.ytd.insurable) + '</td></tr>'
+        + '<tr><td>QPIP insurable (YTD)</td><td class="amt">' + fmt(r.ytd.qpipInsurable) + '</td></tr>'
         + '</tbody></table>'
       + '</div>'
     + '</div>'
 
     + '<div class="net"><span class="lbl">Net pay</span><span class="val">' + money(r.net) + '</span></div>'
+    + (g.length
+        ? '<div class="draft"><b>Draft — not a final paystub.</b> Lines marked * are not yet supplied, '
+          + 'so the net pay above is overstated. ' + esc(g.map(function(x){ return x.text; }).join(' ')) + '</div>'
+        : '')
     + '<div class="stub-foot">'
       + (cfg.craPayrollAccount ? 'CRA payroll account ' + esc(cfg.craPayrollAccount) + '. ' : '')
       + (cfg.rqIdentificationNo ? 'RQ identification no. ' + esc(cfg.rqIdentificationNo) + '. ' : '')
@@ -758,29 +963,18 @@ function stubHtml(r){
     + '</article>';
 }
 
-function renderRecon(){
-  var row = null;
-  for (var i = 0; i < periods.length; i++){
-    if (toISO(periods[i].payDate) === SOURCE.payDate){ row = periods[i]; break; }
-  }
-  var table = document.getElementById('reconTable');
-  if (!row){
-    table.innerHTML = '<tbody><tr><td>No pay date lands on ' + esc(SOURCE.payDate)
-      + ' with the current schedule, so there is nothing to compare.</td></tr></tbody>';
-    return;
-  }
+/** Do the rates and the ceilings agree with the published maximums? */
+function renderRateCheck(){
   var lines = [
-    ['Salary or wages income', row.gross, SOURCE.gross],
-    ['Federal tax deduction', row.fed, SOURCE.federalTax],
-    ['Provincial tax deduction', row.qc, SOURCE.provincialTax],
-    ['QPP deductions', row.qpp, SOURCE.qpp],
-    ['EI deductions', row.ei, SOURCE.ei],
-    ['Total deductions', row.deductions, SOURCE.totalDeductions],
-    ['Net amount', row.net, SOURCE.net]
+    ['QPP employee maximum', round2(Math.max(0, cfg.ympe - cfg.qppExemptionAnnual) * cfg.qppRatePct / 100), PUBLISHED_2026.qppMaxEmployee],
+    ['QPP2 employee maximum', round2(Math.max(0, cfg.yampe - cfg.ympe) * cfg.qpp2RatePct / 100), PUBLISHED_2026.qpp2MaxEmployee],
+    ['EI employee maximum', round2(cfg.eiMie * cfg.eiRatePct / 100), PUBLISHED_2026.eiMaxEmployee],
+    ['QPIP employee maximum', round2(cfg.qpipMax * cfg.qpipEmployeeRatePct / 100), PUBLISHED_2026.qpipMaxEmployee]
   ];
-  table.innerHTML = '<thead><tr><th>Line</th><th class="amt">This app</th><th class="amt">PDOC</th><th>Match</th></tr></thead><tbody>'
+  document.getElementById('rateCheck').innerHTML =
+    '<thead><tr><th>Annual maximum</th><th class="amt">From your rates</th><th class="amt">Published 2026</th><th>Agrees</th></tr></thead><tbody>'
     + lines.map(function(l){
-        var ok = Math.abs(l[1] - l[2]) < 0.005;
+        var ok = Math.abs(l[1] - l[2]) < 0.02;
         return '<tr><td>' + esc(l[0]) + '</td><td class="amt">' + fmt(l[1]) + '</td>'
           + '<td class="amt">' + fmt(l[2]) + '</td>'
           + '<td style="color:var(--' + (ok ? 'good' : 'bad') + ')">' + (ok ? 'yes' : 'no') + '</td></tr>';
@@ -788,17 +982,11 @@ function renderRecon(){
     + '</tbody>';
 }
 
-function renderCapsHint(){
-  var annual = round2(cfg.grossPerPeriod * cfg.periods);
-  var parts = ['Annual salary ' + money(annual) + '.'];
-  parts.push(annual <= cfg.ympe
-    ? 'Below the QPP maximum, so QPP is the same every pay.'
-    : 'Above the QPP maximum — contributions stop partway through the year.');
-  parts.push(annual <= cfg.eiMie
-    ? 'Below the EI maximum, so EI is the same every pay.'
-    : 'Above the EI maximum — premiums stop partway through the year.');
-  parts.push('Update these ceilings each year; they only change the numbers if the salary reaches them.');
-  document.getElementById('capsHint').textContent = parts.join(' ');
+function renderNeeded(){
+  ['federalTaxPerPeriod','quebecTaxPerPeriod'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.classList.toggle('needed', Number(el.value) <= 0);
+  });
 }
 
 function renderAll(){
@@ -808,8 +996,7 @@ function renderAll(){
   renderLedger('rq');
   renderYearTotals();
   renderStubs();
-  renderRecon();
-  renderCapsHint();
+  renderRateCheck();
 }
 
 /* ── CSV export ────────────────────────────────────────────────────────── */
@@ -828,44 +1015,56 @@ function download(name, rows){
   document.body.removeChild(a);
   setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
 }
+/** The caveat travels with the data — a CSV outlives the page that made it. */
+function caveatRows(){
+  var g = gaps(cfg);
+  if (!g.length) return [];
+  return [[], ['INCOMPLETE — do not remit from these figures until resolved:']]
+    .concat(g.map(function(x){ return [(x.agency === 'CRA' ? 'CRA' : x.agency === 'RQ' ? 'Revenu Quebec' : 'Both') + ': ' + x.text]; }));
+}
+function year(){ return parseISO(cfg.firstPayDate).getUTCFullYear(); }
 
-function exportCra(){
-  var rows = [['Period','Due date','Pay dates','Gross payroll','Federal tax','EI employee','EI employer',
-               'CRA remittance','Remitted','QC tax','QPP employee','QPP employer','QPIP employee','QPIP employer','RQ remittance']];
-  remittances.forEach(function(m){
-    rows.push([m.label, toISO(m.due), m.rows.map(function(r){ return toISO(r.payDate); }).join(' '),
-      m.gross, m.fed, m.ei, m.eiEr, m.cra, remitted[m.key + '::cra'] ? 'yes' : 'no',
-      m.qc, m.qpp, m.qppEr, m.qpip, m.qpipEr, m.rq]);
+function exportRemittances(){
+  var rows = [['Agency','Period','Due date','Pay dates','Gross payroll','Federal tax','EI employee','EI employer',
+               'QC tax','QPP employee','QPP employer','QPP2 employee','QPP2 employer',
+               'QPIP employee','QPIP employer','Health Services Fund','Remittance','Remitted','Complete']];
+  var complete = gaps(cfg).length === 0 ? 'yes' : 'no';
+  craRemits.forEach(function(m){
+    rows.push(['CRA', m.label, toISO(m.due), m.rows.map(function(r){ return toISO(r.payDate); }).join(' '),
+      m.gross, m.fed, m.ei, m.eiEr, '', '', '', '', '', '', '', '', m.cra,
+      remitted[m.key + '::cra'] ? 'yes' : 'no', complete]);
   });
-  rows.push(['Total','','', totalsRow('gross'), totalsRow('fed'), totalsRow('ei'), totalsRow('eiEr'),
-    totalsRow('cra'), '', totalsRow('qc'), totalsRow('qpp'), totalsRow('qppEr'),
-    totalsRow('qpip'), totalsRow('qpipEr'), totalsRow('rq')]);
-  download('cra-remittance-ledger-' + parseISO(cfg.firstPayDate).getUTCFullYear() + '.csv', rows);
+  rqRemits.forEach(function(m){
+    rows.push(['Revenu Quebec', m.label, toISO(m.due), m.rows.map(function(r){ return toISO(r.payDate); }).join(' '),
+      m.gross, '', '', '', m.qc, m.qpp, m.qppEr, m.qpp2, m.qpp2Er, m.qpip, m.qpipEr, m.hsf, m.rq,
+      remitted[m.key + '::rq'] ? 'yes' : 'no', complete]);
+  });
+  rows.push(['CRA total','','','', totalsRow('gross'), totalsRow('fed'), totalsRow('ei'), totalsRow('eiEr'),
+    '','','','','','','','', totalsRow('cra'), '', complete]);
+  rows.push(['Revenu Quebec total','','','', totalsRow('gross'), '','','', totalsRow('qc'), totalsRow('qpp'),
+    totalsRow('qppEr'), totalsRow('qpp2'), totalsRow('qpp2Er'), totalsRow('qpip'), totalsRow('qpipEr'),
+    totalsRow('hsf'), totalsRow('rq'), '', complete]);
+  download('remittance-ledger-' + year() + '.csv', rows.concat(caveatRows()));
 }
 
 function exportPeriods(){
-  var rows = [['#','Period start','Period end','Pay date','Gross','Federal tax','QC tax','QPP','EI','QPIP',
-               'Total deductions','Net pay','QPP employer','EI employer','QPIP employer',
+  var rows = [['#','Period start','Period end','Pay date','Gross','Federal tax','QC tax','QPP','QPP2','EI','QPIP',
+               'Total deductions','Net pay','QPP employer','QPP2 employer','EI employer','QPIP employer','HSF',
                'CRA remittance','RQ remittance','YTD gross','YTD net']];
   periods.forEach(function(r){
     rows.push([r.n, toISO(r.periodStart), toISO(r.periodEnd), toISO(r.payDate), r.gross, r.fed, r.qc,
-      r.qpp, r.ei, r.qpip, r.deductions, r.net, r.qppEr, r.eiEr, r.qpipEr, r.cra, r.rq,
-      r.ytd.gross, r.ytd.net]);
+      r.qpp, r.qpp2, r.ei, r.qpip, r.deductions, r.net, r.qppEr, r.qpp2Er, r.eiEr, r.qpipEr, r.hsf,
+      r.cra, r.rq, r.ytd.gross, r.ytd.net]);
   });
-  download('pay-periods-' + parseISO(cfg.firstPayDate).getUTCFullYear() + '.csv', rows);
+  download('pay-periods-' + year() + '.csv', rows.concat(caveatRows()));
 }
 
 /* ── Wiring ────────────────────────────────────────────────────────────── */
 function showTab(name){
-  document.querySelectorAll('.panel').forEach(function(p){
-    p.classList.toggle('active', p.id === 'panel-' + name);
-  });
-  document.querySelectorAll('.tabbtn').forEach(function(b){
-    b.classList.toggle('active', b.dataset.tab === name);
-  });
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.toggle('active', p.id === 'panel-' + name); });
+  document.querySelectorAll('.tabbtn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === name); });
   window.scrollTo(0, 0);
 }
-
 document.querySelectorAll('.tabbtn').forEach(function(b){
   b.addEventListener('click', function(){ showTab(b.dataset.tab); });
 });
@@ -877,6 +1076,7 @@ function fillForm(){
     var el = form.elements[k];
     if (el) el.value = cfg[k];
   });
+  renderNeeded();
 }
 
 document.getElementById('cfgForm').addEventListener('submit', function(e){
@@ -888,6 +1088,11 @@ document.getElementById('cfgForm').addEventListener('submit', function(e){
     if (!el) return;
     next[k] = NUMERIC.indexOf(k) >= 0 ? (Number(el.value) || 0) : el.value;
   });
+  /* First time tax figures are entered, pin the salary they were run at so a
+     later salary change can be detected instead of silently reusing them. */
+  if ((next.federalTaxPerPeriod > 0 || next.quebecTaxPerPeriod > 0) && next.taxBasisGross <= 0){
+    next.taxBasisGross = next.grossPerPeriod;
+  }
   saveCfg(next);
   renderAll();
   fillForm();
@@ -924,7 +1129,6 @@ document.addEventListener('click', function(e){
   document.body.classList.remove('printing-one');
   stub.classList.remove('printing');
 });
-
 document.getElementById('printAllBtn').addEventListener('click', function(){
   document.getElementById('stubFilter').value = 'all';
   renderStubs();
@@ -934,7 +1138,7 @@ document.getElementById('printLedgerBtn').addEventListener('click', function(){
   document.querySelectorAll('#panel-ledger details').forEach(function(d){ d.open = true; });
   window.print();
 });
-document.getElementById('exportCraBtn').addEventListener('click', exportCra);
+document.getElementById('exportCraBtn').addEventListener('click', exportRemittances);
 document.getElementById('exportPeriodsBtn').addEventListener('click', exportPeriods);
 
 renderAll();

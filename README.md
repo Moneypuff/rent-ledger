@@ -54,64 +54,106 @@ the source deductions you owe on each paycheque and prints a paystub for every p
 period. Open it directly, or at `payroll.html` on the same GitHub Pages site.
 
 It's set up for a **Québec, biweekly, fixed-salary** employee starting
-**2026-01-01**, seeded from the CRA Payroll Deductions Online Calculator (PDOC)
-result for the 2026-02-20 pay: $2,310.00 salary, federal TD1 $16,452.00 →
-federal tax $170.66, QPP $137.05, EI $30.03, net $1,972.26. The **Source check**
-table at the bottom of Settings recomputes that pay and compares it to PDOC line
-by line, so you can see the engine still reproduces your source figures after any
-change.
+**2026-01-01**, with 26 pay dates running 2026-01-09 → 2026-12-25.
+
+### What the page treats as known
+
+Exactly one figure comes from the source screenshot: the **$2,310.00 biweekly
+salary**. Everything the screenshot showed downstream of it — the income tax, the
+contributions, the net pay — is treated as unverified and is either recomputed from
+published rate tables or required as an input.
+
+The statutory rates are the published 2026 tables, not values inferred from the
+screenshot:
+
+| | 2026 |
+|---|---|
+| QPP employee rate | 6.30% (5.30% base + 1.00% first additional) |
+| QPP basic exemption / max pensionable | $3,500 / $74,600 |
+| QPP2 employee rate / max pensionable | 4.00% on earnings $74,600–$85,000 |
+| EI employee rate (**reduced Québec rate**) | 1.30%, max insurable $68,900 |
+| EI employer | 1.4× employee (1.82%) |
+| QPIP employee / employer | 0.430% / 0.602%, max insurable $103,000 |
+
+A **rate self-check** in Settings confirms these agree with the published annual
+maximums ($4,479.30 QPP, $416.00 QPP2, $895.70 EI, $442.90 QPIP). That checks the
+rates are internally consistent — it can't tell you whether they're still current,
+so re-check them each January.
+
+### Two numbers you must supply
+
+Income tax is **not calculated here**, and not guessed. It depends on the whole
+TD1 / TP-1015.3-V picture rather than on a rate this page could apply:
+
+- **Federal income tax** — from the CRA's **PDOC**.
+- **Québec income tax** — from Revenu Québec's **WebRAS**. PDOC does not compute
+  Québec provincial tax at all.
+
+Both default to zero, and while they are zero the page says so **everywhere the
+numbers are acted on** — a banner on the ledger, a "not supplied" mark on the
+affected line, a "Partial" tag on every remittance bucket, a "Draft — not a final
+paystub" notice on each stub, and a caveat appended to both CSV exports. A silent
+zero in a remittance ledger reads as "nothing owed", which is how an
+under-remittance happens.
+
+Enter the salary you ran PDOC/WebRAS at alongside the amounts. If the salary later
+changes, the ledger flags the tax figures as stale rather than quietly reusing them.
+
+There's a third, optional input: the employer **Health Services Fund (FSS)**
+contribution, whose rate depends on your total payroll and sector. It's excluded
+from the totals until you enter a rate, and labelled as excluded. **CNESST** is an
+insurance premium rather than a source deduction and isn't tracked here at all.
 
 ### Two remittances, not one
 
 In Québec your source deductions split between two governments, and the page keeps
-a separate ledger for each:
+a separate ledger for each — including separate remitter frequencies, since the CRA
+and Revenu Québec assign those independently.
 
 | | Goes to | Per pay | 2026 total |
 |---|---|---|---|
-| Federal income tax | CRA | $170.66 | $4,437.16 |
+| Federal income tax | CRA | *you supply* | *you supply* |
 | EI — employee | CRA | $30.03 | $780.78 |
 | EI — employer (1.4×) | CRA | $42.04 | $1,093.04 |
-| **CRA remittance** | **CRA** | **$242.73** | **$6,310.98** |
+| **CRA remittance** | **CRA** | **$72.07** + tax | **$1,873.82** + tax |
+| Québec income tax | Revenu Québec | *you supply* | *you supply* |
 | QPP — employee | Revenu Québec | $137.05 | $3,563.30 |
 | QPP — employer (matched) | Revenu Québec | $137.05 | $3,563.30 |
-| Québec income tax | Revenu Québec | see below | — |
+| QPIP — employee | Revenu Québec | $9.93 | $258.18 |
+| QPIP — employer | Revenu Québec | $13.91 | $361.66 |
+| **RQ remittance** | **Revenu Québec** | **$297.94** + tax | **$7,746.44** + tax |
 
 **QPP is not part of your CRA remittance** even though it comes off the same
-paycheque — it goes to Revenu Québec along with Québec income tax and QPIP.
+paycheque — it goes to Revenu Québec along with Québec income tax and QPIP. Note
+that the Revenu Québec side is the *larger* of the two.
 
-Pay dates run every 14 days from **2026-01-09** to **2026-12-25** — 26 in the
-year, with three pay dates landing in May and October. As a regular remitter,
-each month's deductions are due the **15th of the following month** (rolled to
-the Monday when the 15th is a weekend), so January's $485.46 is due 2026-02-16
-and December's is due 2027-01-15. Tick **Remitted** as you pay each one; the
-marks are stored in your browser.
-
-### Two numbers you have to supply
-
-PDOC doesn't produce either of these, so they default to zero rather than to a
-guess — the page would otherwise understate what you owe Revenu Québec:
-
-- **Québec income tax** — PDOC shows `N/A` for the provincial TD1 and $0.00 for
-  provincial tax because Québec tax is calculated with Revenu Québec's **WebRAS**,
-  not PDOC. Run WebRAS for the same salary and enter the per-period amount in Settings.
-- **QPIP (RQAP)** — not shown on the PDOC output at all. Enter the current employee
-  and employer rates in Settings to have it flow into the provincial remittance and
-  onto the paystubs.
-
-The CRA side is complete and correct without either of them.
+As a regular remitter, each month's deductions are due the **15th of the following
+month**, so January is due 2026-02-16 and December is due 2027-01-15. Due dates
+roll forward off weekends; **statutory holidays are not in the table**, so check a
+due date that lands on one. Tick "Remitted" as you pay each one — the marks are
+stored in your browser, and the "Outstanding" figure covers both agencies.
 
 ### The rest
 
-- **Paystubs** — one per pay period, with current and year-to-date columns,
-  employer contributions, and running QPP-pensionable / EI-insurable totals.
-  Print one, or print all 26 (each starts a new page).
-- **Exports** — CSV of the remittance ledger and of all 26 pay periods.
-- **Annual maximums** — the QPP and EI ceilings are editable. At $60,060/year the
-  salary is below both, so every pay is identical; raise the salary and
-  contributions correctly stop mid-year at the maximum.
-- **Rates change every year.** The statutory rates and ceilings in Settings are
-  the ones that reproduce your 2026 PDOC result. Re-run PDOC each January and
-  update them before relying on the numbers for a new tax year.
+- **Paystubs** — one per pay period, current and year-to-date columns, employer
+  contributions shown separately from deductions, and running QPP-pensionable /
+  EI-insurable / QPIP-insurable totals. Print one or all.
+- **Exports** — CSV of the remittance ledger (both agencies) and of all pay periods.
+- **Pay frequency** — weekly, biweekly, semi-monthly or monthly. The period count
+  follows the frequency, and pay dates stop at December 31, since deductions are
+  reported in the tax year of the pay date.
+- **Annual maximums** — QPP, QPP2, EI and QPIP ceilings all apply per period as YTD
+  accumulates. At $60,060/year the salary is below all of them, so every pay is
+  identical; raise it and contributions stop mid-year at exactly the right total.
+
+### Auditing it
+
+`.claude/agents/payroll-auditor.md` defines a `payroll-auditor` subagent that checks
+this kind of work: agency routing, reconciliation to source, remittance bucketing
+and due dates, ceiling behaviour, rounding, YTD integrity and disclosure of
+defaulted-to-zero figures. It verifies by executing rather than reading, and it will
+not invent a statutory rate to check against — an unverifiable rate is reported as a
+finding rather than silently confirmed.
 
 ## Local development
 
