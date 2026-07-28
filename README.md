@@ -80,29 +80,26 @@ maximums ($4,479.30 QPP, $416.00 QPP2, $895.70 EI, $442.90 QPIP). That checks th
 rates are internally consistent — it can't tell you whether they're still current,
 so re-check them each January.
 
-### Two numbers you must supply
+### Income tax and the employer-only charges
 
-Income tax is **not calculated here**, and not guessed. It depends on the whole
-TD1 / TP-1015.3-V picture rather than on a rate this page could apply:
+Income tax is **not calculated here** — it depends on the whole TD1 / TP-1015.3-V
+picture rather than on a rate this page could apply. The figures in Settings were
+supplied by the employer's accountant and pinned to the salary they were run at:
 
-- **Federal income tax** — from the CRA's **PDOC**.
-- **Québec income tax** — from Revenu Québec's **WebRAS**. PDOC does not compute
-  Québec provincial tax at all.
+- **Federal income tax $170.66** per pay — from the CRA's **PDOC**.
+- **Québec income tax $217.62** per pay — from Revenu Québec's **WebRAS**. PDOC does
+  not compute Québec provincial tax at all.
 
-Both default to zero, and while they are zero the page says so **everywhere the
-numbers are acted on** — a banner on the ledger, a "not supplied" mark on the
-affected line, a "Partial" tag on every remittance bucket, a "Draft — not a final
-paystub" notice on each stub, and a caveat appended to both CSV exports. A silent
-zero in a remittance ledger reads as "nothing owed", which is how an
-under-remittance happens.
+If the salary changes, the ledger flags these as stale rather than quietly reusing
+them. If either is cleared, the page marks every affected total as incomplete —
+a banner on the ledger, a "not supplied" mark on the line, a "Partial" tag on each
+bucket, a "Draft" notice on each stub, and a caveat in both CSV exports.
 
-Enter the salary you ran PDOC/WebRAS at alongside the amounts. If the salary later
-changes, the ledger flags the tax figures as stale rather than quietly reusing them.
-
-There's a third, optional input: the employer **Health Services Fund (FSS)**
-contribution, whose rate depends on your total payroll and sector. It's excluded
-from the totals until you enter a rate, and labelled as excluded. **CNESST** is an
-insurance premium rather than a source deduction and isn't tracked here at all.
+Two employer-only charges on total payroll are also remitted to Revenu Québec
+alongside the source deductions. Neither rate is standard — **QHSF** depends on
+total payroll and sector, **CNESST** on your classification unit — so both are
+inputs. The rates configured are those implied by the accountant's figures:
+QHSF **1.65%** ($38.12) and CNESST **4.20%** ($97.02) per pay.
 
 ### Two remittances, not one
 
@@ -112,20 +109,30 @@ and Revenu Québec assign those independently.
 
 | | Goes to | Per pay | 2026 total |
 |---|---|---|---|
-| Federal income tax | CRA | *you supply* | *you supply* |
+| Federal income tax | CRA | $170.66 | $4,437.16 |
 | EI — employee | CRA | $30.03 | $780.78 |
 | EI — employer (1.4×) | CRA | $42.04 | $1,093.04 |
-| **CRA remittance** | **CRA** | **$72.07** + tax | **$1,873.82** + tax |
-| Québec income tax | Revenu Québec | *you supply* | *you supply* |
+| **CRA remittance** | **CRA** | **$242.73** | **$6,310.98** |
+| Québec income tax | Revenu Québec | $217.62 | $5,658.12 |
 | QPP — employee | Revenu Québec | $137.05 | $3,563.30 |
 | QPP — employer (matched) | Revenu Québec | $137.05 | $3,563.30 |
 | QPIP — employee | Revenu Québec | $9.93 | $258.18 |
 | QPIP — employer | Revenu Québec | $13.91 | $361.66 |
-| **RQ remittance** | **Revenu Québec** | **$297.94** + tax | **$7,746.44** + tax |
+| QHSF — employer | Revenu Québec | $38.12 | $991.12 |
+| CNESST — employer | Revenu Québec | $97.02 | $2,522.52 |
+| **RQ remittance** | **Revenu Québec** | **$650.70** | **$16,918.20** |
+
+Employee net pay is **$1,744.71** per pay, $45,362.46 for the year. Total cost to
+the employer is **$68,591.64** — salary plus $8,531.64 in employer contributions.
 
 **QPP is not part of your CRA remittance** even though it comes off the same
-paycheque — it goes to Revenu Québec along with Québec income tax and QPIP. Note
-that the Revenu Québec side is the *larger* of the two.
+paycheque — it goes to Revenu Québec along with Québec income tax, QPIP, QHSF and
+CNESST. Revenu Québec collects 73% of the total.
+
+One line to confirm with your accountant: their statement did not list **employer
+EI**, which is 1.4× the employee premium — $42.04 per pay, $1,093.04 for the year,
+owed to the CRA. Every other line agrees to the cent except employer QPIP, where
+the published 0.602% gives $13.91 against their $13.90.
 
 As a regular remitter, each month's deductions are due the **15th of the following
 month**, so January is due 2026-02-16 and December is due 2027-01-15. Due dates

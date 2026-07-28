@@ -354,15 +354,16 @@
       <div class="section-head"><h2>Employer contributions beyond the payroll deductions</h2><div class="rule"></div></div>
       <div class="card">
         <div class="field-grid">
-          <div class="field full"><label for="hsfRatePct">Health Services Fund rate (%)</label><input id="hsfRatePct" name="hsfRatePct" type="number" step="0.001" min="0"></div>
+          <div class="field"><label for="hsfRatePct">Health Services Fund rate (%)</label><input id="hsfRatePct" name="hsfRatePct" type="number" step="0.001" min="0"></div>
+          <div class="field"><label for="cnesstRatePct">CNESST rate (%)</label><input id="cnesstRatePct" name="cnesstRatePct" type="number" step="0.001" min="0"></div>
         </div>
         <p class="hint">
-          Québec employers also owe a <strong>Health Services Fund (FSS)</strong> contribution on total
-          payroll, remitted to Revenu Québec alongside the source deductions. Your rate depends on your
-          total payroll and your sector, so it is left at zero until you enter it — it is
-          <em>not</em> included in the totals while it is blank.
-          <strong>CNESST</strong> is separate again: it's an insurance premium, not a source deduction,
-          and is not tracked on this page.
+          Two employer-only charges on total payroll, both remitted to <strong>Revenu Québec</strong>
+          alongside the source deductions — CNESST premiums have been collected periodically by Revenu
+          Québec since 2011 rather than billed separately at year end.
+          Neither rate is standard: <strong>QHSF</strong> depends on your total payroll and sector, and
+          <strong>CNESST</strong> on your classification unit, so both are employer-specific and neither
+          is included in the totals while it is blank.
         </p>
       </div>
 
@@ -433,9 +434,12 @@ var DEFAULTS = {
 
   grossPerPeriod: 2310.00,
 
-  federalTaxPerPeriod: 0,
-  quebecTaxPerPeriod: 0,
-  taxBasisGross: 0,
+  /* Supplied by the employer's accountant for this salary. Federal tax also
+     matches the original PDOC output; Québec tax is the WebRAS figure PDOC
+     cannot produce. Both are pinned to the salary they were calculated at. */
+  federalTaxPerPeriod: 170.66,
+  quebecTaxPerPeriod: 217.62,
+  taxBasisGross: 2310.00,
 
   qppRatePct: 6.30,
   qppExemptionAnnual: 3500,
@@ -451,7 +455,12 @@ var DEFAULTS = {
   qpipEmployerRatePct: 0.602,
   qpipMax: 103000,
 
-  hsfRatePct: 0
+  /* Employer-only, both remitted to Revenu Québec. Rates are employer-specific:
+     QHSF depends on total payroll and sector, CNESST on the classification unit.
+     These are the rates implied by the accountant's figures on a $2,310 pay
+     (38.12 / 2310 = 1.65%, 97.02 / 2310 = 4.20%). */
+  hsfRatePct: 1.65,
+  cnesstRatePct: 4.20
 };
 
 /* Published 2026 maximums, used only to self-check the rates against the
@@ -476,7 +485,7 @@ var REMIT_KEY = 'payroll.remitted.v2';
 var NUMERIC = ['periodEndOffsetDays','grossPerPeriod','federalTaxPerPeriod','quebecTaxPerPeriod',
   'taxBasisGross','qppRatePct','qppExemptionAnnual','ympe','qpp2RatePct','yampe',
   'eiRatePct','eiEmployerMultiplier','eiMie',
-  'qpipEmployeeRatePct','qpipEmployerRatePct','qpipMax','hsfRatePct'];
+  'qpipEmployeeRatePct','qpipEmployerRatePct','qpipMax','hsfRatePct','cnesstRatePct'];
 
 /* ── Small helpers ──────────────────────────────────────────────────────── */
 function round2(n){ return Math.round((n + Number.EPSILON) * 100) / 100; }
@@ -543,7 +552,9 @@ function gaps(cfg){
   if (cfg.quebecTaxPerPeriod <= 0)
     out.push({ agency:'RQ', text:'Québec income tax is not entered — run WebRAS and enter the per-period amount.' });
   if (cfg.hsfRatePct <= 0)
-    out.push({ agency:'RQ', text:'Health Services Fund (FSS) rate is not entered, so no employer FSS contribution is included.' });
+    out.push({ agency:'RQ', text:'Health Services Fund (QHSF) rate is not entered, so no employer QHSF contribution is included.' });
+  if (cfg.cnesstRatePct <= 0)
+    out.push({ agency:'RQ', text:'CNESST rate is not entered, so no CNESST premium is included.' });
   if (cfg.taxBasisGross > 0 && round2(cfg.taxBasisGross) !== round2(cfg.grossPerPeriod))
     out.push({ agency:'both', text:'Income tax was calculated for a salary of ' + money(cfg.taxBasisGross)
       + ' per period but the salary is now ' + money(cfg.grossPerPeriod)
@@ -603,7 +614,7 @@ function buildPeriods(cfg){
   var qpp2Max = round2(Math.max(0, cfg.yampe - cfg.ympe) * cfg.qpp2RatePct / 100);
 
   var ytd = { gross:0, pensionable:0, qpp:0, qppEr:0, qpp2:0, qpp2Er:0, insurable:0, ei:0, eiEr:0,
-              qpipInsurable:0, qpip:0, qpipEr:0, hsf:0, fed:0, qc:0, deductions:0, net:0 };
+              qpipInsurable:0, qpip:0, qpipEr:0, hsf:0, cnesst:0, fed:0, qc:0, deductions:0, net:0 };
   var rows = [];
 
   for (var i = 0; i < dates.length; i++){
@@ -637,8 +648,11 @@ function buildPeriods(cfg){
     var qpip = round2(qpipInsurable * cfg.qpipEmployeeRatePct / 100);
     var qpipEr = round2(qpipInsurable * cfg.qpipEmployerRatePct / 100);
 
-    /* Employer Health Services Fund, on total payroll, if a rate is set. */
+    /* Employer-only, on total payroll. Both are remitted to Revenu Québec with
+       the source deductions — CNESST premiums have been collected periodically
+       by Revenu Québec since 2011 rather than billed separately. */
     var hsf = round2(gross * cfg.hsfRatePct / 100);
+    var cnesst = round2(gross * cfg.cnesstRatePct / 100);
 
     var fed = round2(cfg.federalTaxPerPeriod);
     var qc = round2(cfg.quebecTaxPerPeriod);
@@ -653,7 +667,7 @@ function buildPeriods(cfg){
     ytd.ei = round2(ytd.ei + ei);          ytd.eiEr = round2(ytd.eiEr + eiEr);
     ytd.qpipInsurable = round2(ytd.qpipInsurable + qpipInsurable);
     ytd.qpip = round2(ytd.qpip + qpip);    ytd.qpipEr = round2(ytd.qpipEr + qpipEr);
-    ytd.hsf = round2(ytd.hsf + hsf);
+    ytd.hsf = round2(ytd.hsf + hsf);   ytd.cnesst = round2(ytd.cnesst + cnesst);
     ytd.fed = round2(ytd.fed + fed);       ytd.qc = round2(ytd.qc + qc);
     ytd.deductions = round2(ytd.deductions + deductions);
     ytd.net = round2(ytd.net + net);
@@ -662,10 +676,10 @@ function buildPeriods(cfg){
       n: i + 1, payDate: payDate, periodStart: periodStart, periodEnd: periodEnd,
       gross: gross, fed: fed, qc: qc,
       qpp: qpp, qppEr: qpp, qpp2: qpp2, qpp2Er: qpp2,
-      ei: ei, eiEr: eiEr, qpip: qpip, qpipEr: qpipEr, hsf: hsf,
+      ei: ei, eiEr: eiEr, qpip: qpip, qpipEr: qpipEr, hsf: hsf, cnesst: cnesst,
       deductions: deductions, net: net,
       cra: round2(fed + ei + eiEr),
-      rq: round2(qc + qpp + qpp + qpp2 + qpp2 + qpip + qpipEr + hsf),
+      rq: round2(qc + qpp + qpp + qpp2 + qpp2 + qpip + qpipEr + hsf + cnesst),
       ytd: JSON.parse(JSON.stringify(ytd))
     });
   }
@@ -706,7 +720,7 @@ function buildRemittances(rows, remitterType){
       gross: sum('gross'), fed: sum('fed'), qc: sum('qc'),
       qpp: sum('qpp'), qppEr: sum('qppEr'), qpp2: sum('qpp2'), qpp2Er: sum('qpp2Er'),
       ei: sum('ei'), eiEr: sum('eiEr'),
-      qpip: sum('qpip'), qpipEr: sum('qpipEr'), hsf: sum('hsf'),
+      qpip: sum('qpip'), qpipEr: sum('qpipEr'), hsf: sum('hsf'), cnesst: sum('cnesst'),
       cra: sum('cra'), rq: sum('rq')
     };
   });
@@ -798,7 +812,8 @@ function renderLedger(which){
          ['QPP2 — employer', m.qpp2Er, false],
          ['QPIP — employee', m.qpip, false],
          ['QPIP — employer', m.qpipEr, false],
-         ['Health Services Fund', m.hsf, cfg.hsfRatePct <= 0]];
+         ['Health Services Fund (QHSF)', m.hsf, cfg.hsfRatePct <= 0],
+         ['CNESST premium', m.cnesst, cfg.cnesstRatePct <= 0]];
 
     /* Zero rows that are zero because nothing was entered are marked, not hidden. */
     var body = '<div class="table-wrap"><table><thead><tr>'
@@ -844,7 +859,8 @@ function renderYearTotals(){
     ['QPP2 — employer', totalsRow('qpp2Er'), 'Revenu Québec', false],
     ['QPIP — employee', totalsRow('qpip'), 'Revenu Québec', false],
     ['QPIP — employer', totalsRow('qpipEr'), 'Revenu Québec', false],
-    ['Health Services Fund', totalsRow('hsf'), 'Revenu Québec', noHsf],
+    ['Health Services Fund (QHSF)', totalsRow('hsf'), 'Revenu Québec', noHsf],
+    ['CNESST premium', totalsRow('cnesst'), 'Revenu Québec', cfg.cnesstRatePct <= 0],
     ['Net pay to employee', totalsRow('net'), '—', noFed || noQc]
   ];
   document.getElementById('yearTotals').innerHTML =
@@ -857,7 +873,7 @@ function renderYearTotals(){
     + '<tr class="total"><td>Total to Revenu Québec</td><td>Revenu Québec</td><td class="amt">' + fmt(totalsRow('rq')) + '</td></tr>'
     + '<tr class="total"><td>Total employer cost</td><td>—</td><td class="amt">'
       + fmt(round2(totalsRow('gross') + totalsRow('eiEr') + totalsRow('qppEr') + totalsRow('qpp2Er')
-                   + totalsRow('qpipEr') + totalsRow('hsf'))) + '</td></tr>'
+                   + totalsRow('qpipEr') + totalsRow('hsf') + totalsRow('cnesst'))) + '</td></tr>'
     + (gaps(cfg).length
         ? '<tr><td colspan="3" class="note-cell missing">Incomplete — see the notice at the top of the ledger.</td></tr>'
         : '')
@@ -903,7 +919,8 @@ function stubHtml(r){
     ['QPP2 — employer', r.qpp2Er, r.ytd.qpp2Er, false],
     ['EI — employer', r.eiEr, r.ytd.eiEr, false],
     ['QPIP — employer', r.qpipEr, r.ytd.qpipEr, false],
-    ['Health Services Fund', r.hsf, r.ytd.hsf, cfg.hsfRatePct <= 0]
+    ['Health Services Fund (QHSF)', r.hsf, r.ytd.hsf, cfg.hsfRatePct <= 0],
+    ['CNESST premium', r.cnesst, r.ytd.cnesst, cfg.cnesstRatePct <= 0]
   ];
 
   return '<article class="stub" data-stub="' + r.n + '">'
@@ -1027,33 +1044,33 @@ function year(){ return parseISO(cfg.firstPayDate).getUTCFullYear(); }
 function exportRemittances(){
   var rows = [['Agency','Period','Due date','Pay dates','Gross payroll','Federal tax','EI employee','EI employer',
                'QC tax','QPP employee','QPP employer','QPP2 employee','QPP2 employer',
-               'QPIP employee','QPIP employer','Health Services Fund','Remittance','Remitted','Complete']];
+               'QPIP employee','QPIP employer','Health Services Fund','CNESST','Remittance','Remitted','Complete']];
   var complete = gaps(cfg).length === 0 ? 'yes' : 'no';
   craRemits.forEach(function(m){
     rows.push(['CRA', m.label, toISO(m.due), m.rows.map(function(r){ return toISO(r.payDate); }).join(' '),
-      m.gross, m.fed, m.ei, m.eiEr, '', '', '', '', '', '', '', '', m.cra,
+      m.gross, m.fed, m.ei, m.eiEr, '', '', '', '', '', '', '', '', '', m.cra,
       remitted[m.key + '::cra'] ? 'yes' : 'no', complete]);
   });
   rqRemits.forEach(function(m){
     rows.push(['Revenu Quebec', m.label, toISO(m.due), m.rows.map(function(r){ return toISO(r.payDate); }).join(' '),
-      m.gross, '', '', '', m.qc, m.qpp, m.qppEr, m.qpp2, m.qpp2Er, m.qpip, m.qpipEr, m.hsf, m.rq,
+      m.gross, '', '', '', m.qc, m.qpp, m.qppEr, m.qpp2, m.qpp2Er, m.qpip, m.qpipEr, m.hsf, m.cnesst, m.rq,
       remitted[m.key + '::rq'] ? 'yes' : 'no', complete]);
   });
   rows.push(['CRA total','','','', totalsRow('gross'), totalsRow('fed'), totalsRow('ei'), totalsRow('eiEr'),
-    '','','','','','','','', totalsRow('cra'), '', complete]);
+    '','','','','','','','','', totalsRow('cra'), '', complete]);
   rows.push(['Revenu Quebec total','','','', totalsRow('gross'), '','','', totalsRow('qc'), totalsRow('qpp'),
     totalsRow('qppEr'), totalsRow('qpp2'), totalsRow('qpp2Er'), totalsRow('qpip'), totalsRow('qpipEr'),
-    totalsRow('hsf'), totalsRow('rq'), '', complete]);
+    totalsRow('hsf'), totalsRow('cnesst'), totalsRow('rq'), '', complete]);
   download('remittance-ledger-' + year() + '.csv', rows.concat(caveatRows()));
 }
 
 function exportPeriods(){
   var rows = [['#','Period start','Period end','Pay date','Gross','Federal tax','QC tax','QPP','QPP2','EI','QPIP',
-               'Total deductions','Net pay','QPP employer','QPP2 employer','EI employer','QPIP employer','HSF',
+               'Total deductions','Net pay','QPP employer','QPP2 employer','EI employer','QPIP employer','QHSF','CNESST',
                'CRA remittance','RQ remittance','YTD gross','YTD net']];
   periods.forEach(function(r){
     rows.push([r.n, toISO(r.periodStart), toISO(r.periodEnd), toISO(r.payDate), r.gross, r.fed, r.qc,
-      r.qpp, r.qpp2, r.ei, r.qpip, r.deductions, r.net, r.qppEr, r.qpp2Er, r.eiEr, r.qpipEr, r.hsf,
+      r.qpp, r.qpp2, r.ei, r.qpip, r.deductions, r.net, r.qppEr, r.qpp2Er, r.eiEr, r.qpipEr, r.hsf, r.cnesst,
       r.cra, r.rq, r.ytd.gross, r.ytd.net]);
   });
   download('pay-periods-' + year() + '.csv', rows.concat(caveatRows()));

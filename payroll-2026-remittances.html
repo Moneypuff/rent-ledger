@@ -6,10 +6,10 @@
     --rule:#CFD9CB; --rule-firm:#B3C0AE;
     --cra:#2A4B7C; --cra-wash:#DCE4EF; --cra-edge:#8AA3C4;
     --rq:#9A4A28; --rq-wash:#F2E3DA; --rq-edge:#CB9B7E;
+    --ok:#2E6B45; --flagbg:#FBF0DC; --flagbd:#C9A24A; --flagink:#7A5A12;
     --shadow:0 1px 0 rgba(23,28,21,.04), 0 6px 20px -12px rgba(23,28,21,.28);
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     --mono:ui-monospace,"SF Mono",SFMono-Regular,"Cascadia Mono",Menlo,Consolas,"Liberation Mono",monospace;
-    --maxw:1180px;
   }
   @media (prefers-color-scheme:dark){
     :root{
@@ -18,6 +18,7 @@
       --rule:#2C3327; --rule-firm:#3D4636;
       --cra:#8DB0DE; --cra-wash:#1B2637; --cra-edge:#3D577D;
       --rq:#E09769; --rq-wash:#2E1E15; --rq-edge:#7A4A2E;
+      --ok:#6FBE8A; --flagbg:#2E2712; --flagbd:#8A6F24; --flagink:#E3C46E;
       --shadow:0 1px 0 rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.8);
     }
   }
@@ -27,6 +28,7 @@
     --rule:#2C3327; --rule-firm:#3D4636;
     --cra:#8DB0DE; --cra-wash:#1B2637; --cra-edge:#3D577D;
     --rq:#E09769; --rq-wash:#2E1E15; --rq-edge:#7A4A2E;
+    --ok:#6FBE8A; --flagbg:#2E2712; --flagbd:#8A6F24; --flagink:#E3C46E;
     --shadow:0 1px 0 rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.8);
   }
   :root[data-theme="light"]{
@@ -35,293 +37,362 @@
     --rule:#CFD9CB; --rule-firm:#B3C0AE;
     --cra:#2A4B7C; --cra-wash:#DCE4EF; --cra-edge:#8AA3C4;
     --rq:#9A4A28; --rq-wash:#F2E3DA; --rq-edge:#CB9B7E;
+    --ok:#2E6B45; --flagbg:#FBF0DC; --flagbd:#C9A24A; --flagink:#7A5A12;
     --shadow:0 1px 0 rgba(23,28,21,.04), 0 6px 20px -12px rgba(23,28,21,.28);
   }
 
   *{box-sizing:border-box;}
-  body{
-    margin:0; background:var(--stock); color:var(--ink); font-family:var(--sans);
-    font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
-  }
-  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 20px 72px; }
+  body{ margin:0; background:var(--stock); color:var(--ink); font-family:var(--sans);
+        font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 20px 72px; }
   h1,h2,h3{ margin:0; font-weight:800; letter-spacing:-0.022em; text-wrap:balance; }
   p{ margin:0; }
   .lede{ max-width:64ch; color:var(--ink-mid); }
+  .eyebrow{ font-size:11px; font-weight:700; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-faint); }
+  .fig{ font-family:var(--mono); font-variant-numeric:tabular-nums; }
 
-  /* type utilities */
-  .eyebrow{
-    font-size:11px; font-weight:700; letter-spacing:.11em; text-transform:uppercase;
-    color:var(--ink-faint);
-  }
-  .fig,.figure,.amt{ font-family:var(--mono); font-variant-numeric:tabular-nums; }
-
-  /* masthead */
   header.mast{ border-bottom:2px solid var(--ink); padding:44px 0 22px; margin-bottom:34px; }
-  .mast .kicker{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
-  .mast h1{ font-size:clamp(28px,4.4vw,46px); line-height:1.06; max-width:19ch; }
+  .mast h1{ font-size:clamp(28px,4.4vw,46px); line-height:1.06; max-width:20ch; margin-top:14px; }
   .mast .sub{ margin-top:14px; font-size:16px; }
-  .basis{
-    margin-top:26px; display:flex; flex-wrap:wrap; gap:0;
-    border:1px solid var(--rule-firm); border-radius:3px; background:var(--sheet); overflow:hidden;
-  }
-  .basis div{ padding:11px 16px; border-right:1px solid var(--rule); flex:1 1 auto; min-width:150px; }
+  .basis{ margin-top:26px; display:flex; flex-wrap:wrap;
+    border:1px solid var(--rule-firm); border-radius:3px; background:var(--sheet); overflow:hidden; }
+  .basis div{ padding:11px 16px; border-right:1px solid var(--rule); flex:1 1 auto; min-width:148px; }
   .basis div:last-child{ border-right:0; }
   .basis dt{ font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); }
   .basis dd{ margin:3px 0 0; font-family:var(--mono); font-size:16px; font-weight:600; }
 
-  /* section furniture */
   section{ margin-top:56px; }
   .shead{ display:flex; align-items:baseline; gap:14px; margin-bottom:6px; flex-wrap:wrap; }
   .shead h2{ font-size:21px; }
   .shead .rule{ flex:1; height:1px; background:var(--rule-firm); min-width:24px; }
   .shead .meta{ font-family:var(--mono); font-size:12px; color:var(--ink-faint); }
-  .snote{ color:var(--ink-mute); font-size:14px; max-width:70ch; margin-bottom:20px; }
+  .snote{ color:var(--ink-mute); font-size:14px; max-width:72ch; margin-bottom:20px; }
 
-  /* the split: two agency cards */
+  .flow{ margin-top:18px; background:var(--sheet); border:1px solid var(--rule); border-radius:3px;
+         display:grid; grid-template-columns:1fr; overflow:hidden; box-shadow:var(--shadow); }
+  @media (min-width:820px){ .flow{ grid-template-columns:repeat(5,1fr); } }
+  .flow > div{ padding:16px 18px; border-bottom:1px solid var(--rule); }
+  .flow > div:last-child{ border-bottom:0; }
+  @media (min-width:820px){ .flow > div{ border-bottom:0; border-right:1px solid var(--rule); }
+    .flow > div:last-child{ border-right:0; } }
+  .flow .k{ font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); }
+  .flow .v{ font-family:var(--mono); font-size:22px; font-weight:700; margin-top:5px; letter-spacing:-.02em; }
+  .flow .d{ font-size:12px; color:var(--ink-mute); margin-top:4px; }
+  .flow .v.cra-c{ color:var(--cra); } .flow .v.rq-c{ color:var(--rq); }
+  .flow .gross{ background:var(--sunk); }
+
   .split{ display:grid; grid-template-columns:1fr; gap:16px; }
   @media (min-width:760px){ .split{ grid-template-columns:1fr 1fr; } }
-  .agency{
-    background:var(--sheet); border:1px solid var(--rule); border-left:4px solid var(--edge);
-    border-radius:3px; padding:20px 22px 18px; box-shadow:var(--shadow);
-  }
-  .agency.cra{ --edge:var(--cra); --hue:var(--cra); --wash:var(--cra-wash); }
-  .agency.rq{ --edge:var(--rq); --hue:var(--rq); --wash:var(--rq-wash); }
+  .agency{ background:var(--sheet); border:1px solid var(--rule); border-left:4px solid var(--edge);
+           border-radius:3px; padding:20px 22px 18px; box-shadow:var(--shadow); min-width:0; }
+  .agency.cra{ --edge:var(--cra); --hue:var(--cra); }
+  .agency.rq{ --edge:var(--rq); --hue:var(--rq); }
   .agency .who{ font-size:11px; font-weight:700; letter-spacing:.11em; text-transform:uppercase; color:var(--hue); }
   .agency h3{ font-size:19px; margin-top:4px; }
-  .agency .blurb{ font-size:13.5px; color:var(--ink-mute); margin-top:6px; min-height:3.4em; }
-  .agency .headline{
-    margin-top:16px; padding-top:14px; border-top:1px solid var(--rule);
-    display:flex; align-items:flex-end; justify-content:space-between; gap:12px;
-  }
-  .agency .headline .n{ font-family:var(--mono); font-size:30px; font-weight:700; letter-spacing:-.02em; color:var(--hue); }
-  .agency .headline .lbl{ font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); text-align:right; line-height:1.5; }
+  .agency .blurb{ font-size:13.5px; color:var(--ink-mute); margin-top:6px; min-height:3.2em; }
+  .agency .headline{ margin-top:16px; padding-top:14px; border-top:1px solid var(--rule);
+    display:flex; align-items:flex-end; justify-content:space-between; gap:12px; }
+  .agency .headline .n{ font-family:var(--mono); font-size:29px; font-weight:700; letter-spacing:-.02em; color:var(--hue); }
+  .agency .headline .lbl{ font-size:11px; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--ink-faint); text-align:right; line-height:1.5; }
   .lines{ width:100%; border-collapse:collapse; margin-top:14px; font-size:13.5px; }
   .lines th,.lines td{ padding:6px 0; border-bottom:1px dotted var(--rule-firm); text-align:left; }
   .lines td.fig{ text-align:right; white-space:nowrap; }
   .lines tr.sum td,.lines tr.sum th{ border-bottom:0; border-top:2px solid var(--hue); font-weight:700; padding-top:9px; }
   .lines .who-tag{ font-size:10.5px; color:var(--ink-faint); letter-spacing:.05em; }
-  .lines tr.pending th,.lines tr.pending td{ color:var(--ink-faint); font-style:italic; }
-  .lines tr.pending td.fig{ font-style:normal; }
-  .pend-box{
-    display:inline-block; border:1px dashed var(--rule-firm); border-radius:2px;
-    padding:0 7px; font-family:var(--sans); font-size:11px; font-style:normal;
-    letter-spacing:.05em; text-transform:uppercase; color:var(--ink-faint);
-  }
+  .lines tr.added th{ color:var(--flagink); font-weight:700; }
+  .lines tr.added td{ color:var(--flagink); }
 
-  /* per-cheque flow strip */
-  .flow{
-    margin-top:18px; background:var(--sheet); border:1px solid var(--rule); border-radius:3px;
-    display:grid; grid-template-columns:1fr; overflow:hidden; box-shadow:var(--shadow);
-  }
-  @media (min-width:700px){ .flow{ grid-template-columns:1.15fr 1fr 1fr 1fr; } }
-  .flow > div{ padding:16px 18px; border-bottom:1px solid var(--rule); }
-  .flow > div:last-child{ border-bottom:0; }
-  @media (min-width:700px){
-    .flow > div{ border-bottom:0; border-right:1px solid var(--rule); }
-    .flow > div:last-child{ border-right:0; }
-  }
-  .flow .k{ font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); }
-  .flow .v{ font-family:var(--mono); font-size:24px; font-weight:700; margin-top:5px; letter-spacing:-.02em; }
-  .flow .d{ font-size:12.5px; color:var(--ink-mute); margin-top:4px; }
-  .flow .v.cra-c{ color:var(--cra); } .flow .v.rq-c{ color:var(--rq); }
-  .flow .gross{ background:var(--sunk); }
-
-  /* tables */
-  .tscroll{ overflow-x:auto; border:1px solid var(--rule-firm); border-radius:3px; background:var(--sheet); box-shadow:var(--shadow); }
-  table.grid{ width:100%; border-collapse:collapse; font-size:13px; min-width:860px; }
-  table.grid caption{ text-align:left; padding:13px 16px; font-size:12.5px; color:var(--ink-mute); border-bottom:1px solid var(--rule); }
-  table.grid th,table.grid td{ padding:8px 11px; text-align:left; white-space:nowrap; border-bottom:1px solid var(--rule); }
-  table.grid thead th{
-    font-size:10.5px; font-weight:700; letter-spacing:.075em; text-transform:uppercase;
-    color:var(--ink-mute); background:var(--sunk); position:sticky; top:0; z-index:2;
-    border-bottom:1px solid var(--rule-firm);
-  }
-  table.grid thead tr.band th{
-    text-align:center; letter-spacing:.13em; padding:7px 11px; color:var(--ink);
-    border-bottom:1px solid var(--rule-firm);
-  }
+  .tscroll{ overflow-x:auto; border:1px solid var(--rule-firm); border-radius:3px;
+            background:var(--sheet); box-shadow:var(--shadow); }
+  table.grid{ width:100%; border-collapse:collapse; font-size:13px; min-width:920px; }
+  table.grid caption{ text-align:left; padding:13px 16px; font-size:12.5px; color:var(--ink-mute);
+    border-bottom:1px solid var(--rule); }
+  table.grid th,table.grid td{ padding:8px 10px; text-align:left; white-space:nowrap; border-bottom:1px solid var(--rule); }
+  table.grid thead th{ font-size:10.5px; font-weight:700; letter-spacing:.075em; text-transform:uppercase;
+    color:var(--ink-mute); background:var(--sunk); border-bottom:1px solid var(--rule-firm); }
+  table.grid thead tr.band th{ text-align:center; letter-spacing:.13em; padding:7px 10px; color:var(--ink); }
   th.b-cra{ background:var(--cra-wash); color:var(--cra) !important; border-left:2px solid var(--cra); border-right:2px solid var(--cra); }
   th.b-rq{ background:var(--rq-wash); color:var(--rq) !important; border-left:2px solid var(--rq); border-right:2px solid var(--rq); }
   table.grid td.fig,table.grid th.fig{ text-align:right; }
   table.grid tbody tr:hover{ background:var(--sunk); }
   table.grid tbody tr:last-child td{ border-bottom:0; }
-  td.cra-fig,th.cra-fig{ color:var(--ink-mid); }
-  td.rq-fig,th.rq-fig{ color:var(--ink-mid); }
   td.cra-tot{ color:var(--cra); font-weight:700; background:var(--cra-wash); }
   td.rq-tot{ color:var(--rq); font-weight:700; background:var(--rq-wash); }
   th.cra-tot{ color:var(--cra) !important; } th.rq-tot{ color:var(--rq) !important; }
   table.grid tbody th[scope="row"]{ font-weight:700; }
   .yr{ color:var(--ink-faint); font-weight:400; font-size:11px; margin-left:6px; font-family:var(--mono); }
   td.pays{ font-family:var(--mono); color:var(--ink-mute); }
-  td.pays .flag{
-    margin-left:8px; font-family:var(--sans); font-size:10px; letter-spacing:.07em; text-transform:uppercase;
-    color:var(--rq); border:1px solid var(--rq-edge); border-radius:2px; padding:1px 5px;
-  }
+  td.pays .flag{ margin-left:7px; font-family:var(--sans); font-size:10px; letter-spacing:.07em;
+    text-transform:uppercase; color:var(--rq); border:1px solid var(--rq-edge); border-radius:2px; padding:1px 5px; }
   tr.three{ background:color-mix(in srgb, var(--rq-wash) 45%, transparent); }
   td.due,td.dt{ font-family:var(--mono); font-size:12px; color:var(--ink-mute); }
   td.dt.strong{ color:var(--ink); font-weight:600; }
   td.pn{ font-family:var(--mono); color:var(--ink-faint); }
-  td.ytd{ color:var(--ink-faint); }
   td.strong{ font-weight:700; }
+  td.net{ font-weight:700; color:var(--ok); }
   tfoot td,tfoot th{ background:var(--sunk); font-weight:700; border-top:2px solid var(--rule-firm) !important; }
 
-  /* derivation */
+  /* accountant comparison */
+  table.cmp{ width:100%; border-collapse:collapse; font-size:13.5px; min-width:640px; }
+  table.cmp th,table.cmp td{ padding:9px 12px; text-align:left; border-bottom:1px solid var(--rule); white-space:nowrap; }
+  table.cmp thead th{ font-size:10.5px; font-weight:700; letter-spacing:.075em; text-transform:uppercase;
+    color:var(--ink-mute); background:var(--sunk); }
+  table.cmp td.fig{ text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums; }
+  table.cmp tbody th{ font-weight:600; }
+  .ag{ font-size:9.5px; font-weight:700; letter-spacing:.08em; border-radius:2px; padding:1px 5px; margin-left:6px; }
+  .ag.c{ color:var(--cra); border:1px solid var(--cra-edge); }
+  .ag.r{ color:var(--rq); border:1px solid var(--rq-edge); }
+  td.verdict{ font-size:12px; }
+  tr.match td.verdict{ color:var(--ok); }
+  tr.diff{ background:var(--flagbg); } tr.diff td.verdict,tr.diff td.diff{ color:var(--flagink); font-weight:700; }
+  tr.absent{ background:var(--flagbg); }
+  tr.absent td.verdict,tr.absent td.absent{ color:var(--flagink); font-weight:700; }
+  .none{ font-style:italic; color:var(--flagink); font-family:var(--sans); }
+
+  .callout{ border:1.5px solid var(--flagbd); background:var(--flagbg); border-radius:3px;
+            padding:16px 18px; margin-top:16px; }
+  .callout h4{ margin:0; font-size:15px; font-weight:800; color:var(--flagink); }
+  .callout p{ font-size:13.5px; color:var(--ink-mid); margin-top:7px; max-width:76ch; }
+  .callout .big{ font-family:var(--mono); font-size:19px; font-weight:700; color:var(--flagink); }
+
   .derive{ display:grid; grid-template-columns:1fr; gap:12px; }
   @media (min-width:820px){ .derive{ grid-template-columns:1fr 1fr; } }
-  .drow{
-    background:var(--sheet); border:1px solid var(--rule); border-left:4px solid var(--edge);
-    border-radius:3px; padding:14px 16px;
-  }
+  /* min-width:0 — grid items default to min-content, and the nowrap formula
+     inside .calc would otherwise force the track wider than the viewport. */
+  .drow{ background:var(--sheet); border:1px solid var(--rule); border-left:4px solid var(--edge);
+         border-radius:3px; padding:14px 16px; min-width:0; }
   .drow.cra{ --edge:var(--cra); --hue:var(--cra); }
   .drow.rq{ --edge:var(--rq); --hue:var(--rq); }
   .drow .dt-h{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
   .drow .name{ font-weight:700; font-size:14.5px; }
   .drow .to{ font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--hue); font-weight:700; }
-  .drow .calc{
-    font-family:var(--mono); font-size:12.5px; color:var(--ink-mute); margin-top:8px;
+  .drow .calc{ font-family:var(--mono); font-size:12.5px; color:var(--ink-mute); margin-top:8px;
     background:var(--sunk); border:1px solid var(--rule); border-radius:2px; padding:7px 9px;
-    overflow-x:auto; white-space:nowrap;
-  }
+    overflow-x:auto; white-space:nowrap; }
   .drow .res{ margin-top:8px; display:flex; justify-content:space-between; gap:10px; font-size:13px; }
   .drow .res b{ font-family:var(--mono); }
   .drow .cap{ font-size:11.5px; color:var(--ink-faint); margin-top:6px; }
 
-  /* pending / excluded */
-  .pending-wrap{ display:grid; grid-template-columns:1fr; gap:12px; }
-  @media (min-width:760px){ .pending-wrap{ grid-template-columns:repeat(3,1fr); } }
-  .pcard{
-    border:1.5px dashed var(--rule-firm); border-radius:3px; padding:15px 17px; background:transparent;
-  }
-  .pcard .to{ font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; }
-  .pcard.cra .to{ color:var(--cra); } .pcard.rq .to{ color:var(--rq); }
-  .pcard h4{ margin:5px 0 0; font-size:15px; font-weight:700; }
-  .pcard .amt-x{ font-family:var(--mono); font-size:20px; color:var(--ink-faint); margin-top:8px; }
-  .pcard p{ font-size:12.5px; color:var(--ink-mute); margin-top:7px; }
-
-  /* reconciliation */
-  .recon{ background:var(--sheet); border:1px solid var(--rule-firm); border-radius:3px; overflow:hidden; box-shadow:var(--shadow); }
-  .recon .rrow{ display:flex; justify-content:space-between; align-items:baseline; gap:16px; padding:13px 18px; border-bottom:1px solid var(--rule); }
+  .recon{ background:var(--sheet); border:1px solid var(--rule-firm); border-radius:3px;
+          overflow:hidden; box-shadow:var(--shadow); }
+  .recon .rrow{ display:flex; justify-content:space-between; align-items:baseline; gap:16px;
+    padding:13px 18px; border-bottom:1px solid var(--rule); }
   .recon .rrow:last-child{ border-bottom:0; }
   .recon .rrow.tot{ background:var(--sunk); border-top:2px solid var(--rule-firm); }
   .recon .rlabel{ font-size:14px; }
   .recon .rlabel small{ display:block; color:var(--ink-faint); font-size:12px; }
   .recon .rval{ font-family:var(--mono); font-size:17px; font-weight:700; white-space:nowrap; }
   .recon .rval.cra-c{ color:var(--cra); } .recon .rval.rq-c{ color:var(--rq); }
+  .recon .rval.ok{ color:var(--ok); }
 
   footer.foot{ margin-top:60px; padding-top:20px; border-top:2px solid var(--ink); font-size:12.5px; color:var(--ink-mute); }
-  footer.foot p{ max-width:74ch; margin-bottom:9px; }
+  footer.foot p{ max-width:76ch; margin-bottom:9px; }
   .legend{ display:flex; gap:18px; flex-wrap:wrap; margin-bottom:14px; font-size:12px; }
   .legend span{ display:inline-flex; align-items:center; gap:7px; }
   .legend i{ width:11px; height:11px; border-radius:2px; display:inline-block; }
   .legend i.c{ background:var(--cra); } .legend i.r{ background:var(--rq); }
-  .legend i.p{ border:1.5px dashed var(--rule-firm); }
+  .legend i.w{ background:var(--flagbg); border:1.5px solid var(--flagbd); }
   @media (prefers-reduced-motion:reduce){ *{ transition:none !important; animation:none !important; } }
 </style>
 
 <div class="wrap">
 
 <header class="mast">
-  <div class="kicker">
-    <span class="eyebrow">Source deduction remittances · Tax year 2026</span>
-  </div>
+  <span class="eyebrow">Source deduction remittances · Tax year 2026</span>
   <h1>What comes off each cheque, and which government it goes to</h1>
   <p class="lede sub">A Québec employer on a fixed biweekly salary remits to <strong>two</strong> separate
-    governments. These are the statutory amounts, computed from the published 2026 rate tables and
-    verified against their annual maximums. Income tax is <em>not</em> included — see the last section.</p>
+    governments. Every figure below is reconciled against the accountant's statement for this salary —
+    with <strong>one line they did not list</strong>, set out in full further down.</p>
 
   <dl class="basis">
     <div><dt>Salary per pay</dt><dd>$2,310.00</dd></div>
+    <div><dt>Employee net</dt><dd>$1,744.71</dd></div>
+    <div><dt>To the CRA</dt><dd>$242.73</dd></div>
+    <div><dt>To Revenu Québec</dt><dd>$650.70</dd></div>
     <div><dt>Frequency</dt><dd>Biweekly · 26</dd></div>
     <div><dt>Annual gross</dt><dd>$60,060.00</dd></div>
-    <div><dt>Pay dates</dt><dd>2026-01-09 → 2026-12-25</dd></div>
-    <div><dt>Province</dt><dd>Québec</dd></div>
   </dl>
 </header>
 
-<!-- ── 1. Per cheque ─────────────────────────────────────────────────── -->
+<!-- 1 — per cheque -->
 <section>
-  <div class="shead"><h2>Every cheque, split three ways</h2><div class="rule"></div>
+  <div class="shead"><h2>Every cheque, split</h2><div class="rule"></div>
     <span class="meta">per pay period · 26 identical</span></div>
   <p class="snote">The salary is below every 2026 annual ceiling, so all 26 pay periods are identical —
     no contribution stops partway through the year.</p>
 
   <div class="flow">
-    <div class="gross">
-      <div class="k">Gross salary</div>
-      <div class="v">$2,310.00</div>
-      <div class="d">Fixed, regardless of hours worked</div>
-    </div>
-    <div>
-      <div class="k">Employee keeps</div>
-      <div class="v">$2,132.99</div>
-      <div class="d">Before income tax is withheld</div>
-    </div>
-    <div>
-      <div class="k">To the CRA</div>
-      <div class="v cra-c">$72.07</div>
-      <div class="d">EI, employee + employer share</div>
-    </div>
-    <div>
-      <div class="k">To Revenu Québec</div>
-      <div class="v rq-c">$297.94</div>
-      <div class="d">QPP and QPIP, both shares</div>
-    </div>
+    <div class="gross"><div class="k">Gross salary</div><div class="v">$2,310.00</div>
+      <div class="d">Fixed, regardless of hours</div></div>
+    <div><div class="k">Employee net</div><div class="v">$1,744.71</div>
+      <div class="d">After $565.29 withheld</div></div>
+    <div><div class="k">Employer adds</div><div class="v">$328.14</div>
+      <div class="d">On top of salary</div></div>
+    <div><div class="k">To the CRA</div><div class="v cra-c">$242.73</div>
+      <div class="d">Federal tax + EI both shares</div></div>
+    <div><div class="k">To Revenu Québec</div><div class="v rq-c">$650.70</div>
+      <div class="d">QC tax, QPP, QPIP, QHSF, CNESST</div></div>
   </div>
 </section>
 
-<!-- ── 2. The two agencies ───────────────────────────────────────────── -->
+<!-- 2 — the two agencies -->
 <section>
   <div class="shead"><h2>The two remittances, itemized</h2><div class="rule"></div>
-    <span class="meta">$370.01 per pay · $9,620.26 per year</span></div>
-  <p class="snote">These are two separate payments, on two separate accounts, to two separate
-    governments. QPP comes off the same cheque as EI but is <strong>not</strong> part of the CRA
-    remittance — that single mistake is the most common way a Québec payroll goes wrong.</p>
+    <span class="meta">$893.43 per pay · $23,229.18 per year</span></div>
+  <p class="snote">Two separate payments, on two separate accounts, to two separate governments. QPP
+    comes off the same cheque as EI but is <strong>not</strong> part of the CRA remittance — that single
+    mistake is the most common way a Québec payroll goes wrong. Revenu Québec collects
+    73% of the total.</p>
 
   <div class="split">
     <article class="agency cra">
       <div class="who">Canada Revenue Agency</div>
       <h3>Federal remittance</h3>
-      <p class="blurb">Employment Insurance, both shares, plus federal income tax once you have it.
-        Remitted on your <span class="fig">RP</span> payroll account.</p>
-      <div class="headline">
-        <div class="n">$1,873.82</div>
-        <div class="lbl">Statutory<br>total, 2026</div>
-      </div>
-      <table class="lines">
-        <tbody>
-          <tr><th>EI — employee <span class="who-tag">withheld</span></th><td class="fig">$780.78</td></tr>
-          <tr><th>EI — employer <span class="who-tag">1.4× employee</span></th><td class="fig">$1,093.04</td></tr>
-          <tr class="pending"><th>Federal income tax <span class="pend-box">you supply</span></th><td class="fig">—</td></tr>
-          <tr class="sum"><th>Total to the CRA</th><td class="fig">$1,873.82</td></tr>
-        </tbody>
-      </table>
+      <p class="blurb">Federal income tax and Employment Insurance, both shares. Remitted on your
+        <span class="fig">RP</span> payroll account.</p>
+      <div class="headline"><div class="n">$6,310.98</div>
+        <div class="lbl">Total<br>2026</div></div>
+      <table class="lines"><tbody>
+        <tr><th>Federal income tax <span class="who-tag">withheld</span></th><td class="fig">$4,437.16</td></tr>
+        <tr><th>EI — employee <span class="who-tag">withheld</span></th><td class="fig">$780.78</td></tr>
+        <tr class="added"><th>EI — employer <span class="who-tag">1.4× employee · added</span></th><td class="fig">$1,093.04</td></tr>
+        <tr class="sum"><th>Total to the CRA</th><td class="fig">$6,310.98</td></tr>
+      </tbody></table>
     </article>
 
     <article class="agency rq">
       <div class="who">Revenu Québec</div>
       <h3>Provincial remittance</h3>
-      <p class="blurb">Québec Pension Plan and Parental Insurance, both shares, plus Québec income tax
-        and any Health Services Fund contribution.</p>
-      <div class="headline">
-        <div class="n">$7,746.44</div>
-        <div class="lbl">Statutory<br>total, 2026</div>
-      </div>
-      <table class="lines">
-        <tbody>
-          <tr><th>QPP — employee <span class="who-tag">withheld</span></th><td class="fig">$3,563.30</td></tr>
-          <tr><th>QPP — employer <span class="who-tag">matched 1:1</span></th><td class="fig">$3,563.30</td></tr>
-          <tr><th>QPIP — employee <span class="who-tag">withheld</span></th><td class="fig">$258.18</td></tr>
-          <tr><th>QPIP — employer</th><td class="fig">$361.66</td></tr>
-          <tr class="pending"><th>Québec income tax <span class="pend-box">you supply</span></th><td class="fig">—</td></tr>
-          <tr class="pending"><th>Health Services Fund <span class="pend-box">if applicable</span></th><td class="fig">—</td></tr>
-          <tr class="sum"><th>Total to Revenu Québec</th><td class="fig">$7,746.44</td></tr>
-        </tbody>
-      </table>
+      <p class="blurb">Québec income tax, QPP and QPIP both shares, plus the two employer-only charges
+        on payroll — QHSF and CNESST.</p>
+      <div class="headline"><div class="n">$16,918.20</div>
+        <div class="lbl">Total<br>2026</div></div>
+      <table class="lines"><tbody>
+        <tr><th>Québec income tax <span class="who-tag">withheld</span></th><td class="fig">$5,658.12</td></tr>
+        <tr><th>QPP — employee <span class="who-tag">withheld</span></th><td class="fig">$3,563.30</td></tr>
+        <tr><th>QPP — employer <span class="who-tag">matched 1:1</span></th><td class="fig">$3,563.30</td></tr>
+        <tr><th>QPIP — employee <span class="who-tag">withheld</span></th><td class="fig">$258.18</td></tr>
+        <tr><th>QPIP — employer</th><td class="fig">$361.66</td></tr>
+        <tr><th>QHSF — employer <span class="who-tag">on payroll</span></th><td class="fig">$991.12</td></tr>
+        <tr><th>CNESST — employer <span class="who-tag">on payroll</span></th><td class="fig">$2,522.52</td></tr>
+        <tr class="sum"><th>Total to Revenu Québec</th><td class="fig">$16,918.20</td></tr>
+      </tbody></table>
     </article>
   </div>
 </section>
 
-<!-- ── 3. Monthly remittance calendar ────────────────────────────────── -->
+<!-- 3 — accountant reconciliation -->
+<section>
+  <div class="shead"><h2>Checked against your accountant</h2><div class="rule"></div>
+    <span class="meta">per pay · $2,310.00</span></div>
+  <p class="snote">Their statement line by line against this calculation. Nine of eleven lines agree
+    exactly, including net pay. Two do not — one is a rounding cent, the other is a contribution that
+    does not appear on their list at all.</p>
+
+  <div class="tscroll">
+    <table class="cmp">
+      <thead><tr>
+        <th scope="col">Line</th><th scope="col" class="fig">Accountant</th>
+        <th scope="col" class="fig">This calculation</th><th scope="col" class="fig">Difference</th>
+        <th scope="col">Status</th>
+      </tr></thead>
+      <tbody>
+      <tr class="match">
+        <th scope="row">Federal income tax <span class="ag c">CRA</span></th>
+        <td class="fig">170.66</td>
+        <td class="fig">170.66</td>
+        <td class="fig match">—</td>
+        <td class="verdict match">agrees</td>
+      </tr>
+      <tr class="match">
+        <th scope="row">EI — employee <span class="ag c">CRA</span></th>
+        <td class="fig">30.03</td>
+        <td class="fig">30.03</td>
+        <td class="fig match">—</td>
+        <td class="verdict match">agrees</td>
+      </tr>
+      <tr class="match">
+        <th scope="row">Québec income tax <span class="ag r">RQ</span></th>
+        <td class="fig">217.62</td>
+        <td class="fig">217.62</td>
+        <td class="fig match">—</td>
+        <td class="verdict match">agrees</td>
+      </tr>
+      <tr class="match">
+        <th scope="row">QPP — employee <span class="ag r">RQ</span></th>
+        <td class="fig">137.05</td>
+        <td class="fig">137.05</td>
+        <td class="fig match">—</td>
+        <td class="verdict match">agrees</td>
+      </tr>
+      <tr class="match">
+        <th scope="row">QPIP — employee <span class="ag r">RQ</span></th>
+        <td class="fig">9.93</td>
+        <td class="fig">9.93</td>
+        <td class="fig match">—</td>
+        <td class="verdict match">agrees</td>
+      </tr>
+      <tr class="match">
+        <th scope="row">Net pay</th>
+        <td class="fig">1,744.71</td>
+        <td class="fig">1,744.71</td>
+        <td class="fig match">—</td>
+        <td class="verdict match">agrees</td>
+      </tr>
+      <tr class="match">
+        <th scope="row">QPP — employer <span class="ag r">RQ</span></th>
+        <td class="fig">137.05</td>
+        <td class="fig">137.05</td>
+        <td class="fig match">—</td>
+        <td class="verdict match">agrees</td>
+      </tr>
+      <tr class="diff">
+        <th scope="row">QPIP — employer <span class="ag r">RQ</span></th>
+        <td class="fig">13.90</td>
+        <td class="fig">13.91</td>
+        <td class="fig diff">+0.01</td>
+        <td class="verdict diff">differs by 1¢</td>
+      </tr>
+      <tr class="match">
+        <th scope="row">QHSF — employer <span class="ag r">RQ</span></th>
+        <td class="fig">38.12</td>
+        <td class="fig">38.12</td>
+        <td class="fig match">—</td>
+        <td class="verdict match">agrees</td>
+      </tr>
+      <tr class="match">
+        <th scope="row">CNESST — employer <span class="ag r">RQ</span></th>
+        <td class="fig">97.02</td>
+        <td class="fig">97.02</td>
+        <td class="fig match">—</td>
+        <td class="verdict match">agrees</td>
+      </tr>
+      <tr class="absent">
+        <th scope="row">EI — employer <span class="ag c">CRA</span></th>
+        <td class="fig"><span class="none">not listed</span></td>
+        <td class="fig">42.04</td>
+        <td class="fig absent">+42.04</td>
+        <td class="verdict absent">missing</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <h4>Employer EI is not on their list</h4>
+    <p>Every employer paying EI premiums also owes the employer share, at
+      <strong>1.4× the employee premium</strong>. On $30.03 withheld that is
+      <span class="big">$42.04</span> per pay — <strong>$1,093.04 across 2026</strong>, owed to
+      the CRA. It may simply be missing from the summary they sent rather than from what they file, but
+      it is the one item worth confirming: nothing else in their figures implies it.</p>
+    <p>The other gap is a cent. QPIP employer at the published 0.602% gives
+      2,310.00 × 0.602% = 13.91, where they show 13.90 — $0.26 across the
+      year. Not worth chasing, but this page uses the published rate.</p>
+  </div>
+</section>
+
+<!-- 4 — calendar -->
 <section>
   <div class="shead"><h2>Remittance calendar</h2><div class="rule"></div>
     <span class="meta">regular remitter · due the 15th following</span></div>
@@ -333,24 +404,17 @@
     <table class="grid">
       <caption>Amounts due by agency. Due dates roll forward off weekends; statutory holidays are not accounted for.</caption>
       <thead>
-        <tr class="band">
-          <th colspan="3"></th>
-          <th colspan="3" class="b-cra">Canada Revenue Agency</th>
-          <th colspan="5" class="b-rq">Revenu Québec</th>
-          <th></th>
-        </tr>
+        <tr class="band"><th colspan="3"></th>
+          <th colspan="4" class="b-cra">Canada Revenue Agency</th>
+          <th colspan="7" class="b-rq">Revenu Québec</th><th></th></tr>
         <tr>
-          <th scope="col">Month paid</th>
-          <th scope="col">Pays</th>
-          <th scope="col" class="fig">Gross payroll</th>
-          <th scope="col" class="fig">EI ee</th>
-          <th scope="col" class="fig">EI er</th>
-          <th scope="col" class="fig cra-tot">CRA due</th>
-          <th scope="col" class="fig">QPP ee</th>
-          <th scope="col" class="fig">QPP er</th>
-          <th scope="col" class="fig">QPIP ee</th>
-          <th scope="col" class="fig">QPIP er</th>
-          <th scope="col" class="fig rq-tot">RQ due</th>
+          <th scope="col">Month paid</th><th scope="col">Pays</th><th scope="col" class="fig">Gross</th>
+          <th scope="col" class="fig">Fed tax</th><th scope="col" class="fig">EI ee</th>
+          <th scope="col" class="fig">EI er</th><th scope="col" class="fig cra-tot">CRA due</th>
+          <th scope="col" class="fig">QC tax</th><th scope="col" class="fig">QPP ee</th>
+          <th scope="col" class="fig">QPP er</th><th scope="col" class="fig">QPIP ee</th>
+          <th scope="col" class="fig">QPIP er</th><th scope="col" class="fig">QHSF</th>
+          <th scope="col" class="fig">CNESST</th><th scope="col" class="fig rq-tot">RQ due</th>
           <th scope="col">Due date</th>
         </tr>
       </thead>
@@ -359,299 +423,327 @@
         <th scope="row">January<span class="yr">2026</span></th>
         <td class="pays">2</td>
         <td class="fig">4,620.00</td>
-        <td class="fig cra-fig">60.06</td>
-        <td class="fig cra-fig">84.08</td>
-        <td class="fig cra-tot">144.14</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">19.86</td>
-        <td class="fig rq-fig">27.82</td>
-        <td class="fig rq-tot">595.88</td>
+        <td class="fig">341.32</td>
+        <td class="fig">60.06</td>
+        <td class="fig">84.08</td>
+        <td class="fig cra-tot">485.46</td>
+        <td class="fig">435.24</td>
+        <td class="fig">274.10</td>
+        <td class="fig">274.10</td>
+        <td class="fig">19.86</td>
+        <td class="fig">27.82</td>
+        <td class="fig">76.24</td>
+        <td class="fig">194.04</td>
+        <td class="fig rq-tot">1,301.40</td>
         <td class="due">2026-02-16</td>
       </tr>
       <tr>
         <th scope="row">February<span class="yr">2026</span></th>
         <td class="pays">2</td>
         <td class="fig">4,620.00</td>
-        <td class="fig cra-fig">60.06</td>
-        <td class="fig cra-fig">84.08</td>
-        <td class="fig cra-tot">144.14</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">19.86</td>
-        <td class="fig rq-fig">27.82</td>
-        <td class="fig rq-tot">595.88</td>
+        <td class="fig">341.32</td>
+        <td class="fig">60.06</td>
+        <td class="fig">84.08</td>
+        <td class="fig cra-tot">485.46</td>
+        <td class="fig">435.24</td>
+        <td class="fig">274.10</td>
+        <td class="fig">274.10</td>
+        <td class="fig">19.86</td>
+        <td class="fig">27.82</td>
+        <td class="fig">76.24</td>
+        <td class="fig">194.04</td>
+        <td class="fig rq-tot">1,301.40</td>
         <td class="due">2026-03-16</td>
       </tr>
       <tr>
         <th scope="row">March<span class="yr">2026</span></th>
         <td class="pays">2</td>
         <td class="fig">4,620.00</td>
-        <td class="fig cra-fig">60.06</td>
-        <td class="fig cra-fig">84.08</td>
-        <td class="fig cra-tot">144.14</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">19.86</td>
-        <td class="fig rq-fig">27.82</td>
-        <td class="fig rq-tot">595.88</td>
+        <td class="fig">341.32</td>
+        <td class="fig">60.06</td>
+        <td class="fig">84.08</td>
+        <td class="fig cra-tot">485.46</td>
+        <td class="fig">435.24</td>
+        <td class="fig">274.10</td>
+        <td class="fig">274.10</td>
+        <td class="fig">19.86</td>
+        <td class="fig">27.82</td>
+        <td class="fig">76.24</td>
+        <td class="fig">194.04</td>
+        <td class="fig rq-tot">1,301.40</td>
         <td class="due">2026-04-15</td>
       </tr>
       <tr>
         <th scope="row">April<span class="yr">2026</span></th>
         <td class="pays">2</td>
         <td class="fig">4,620.00</td>
-        <td class="fig cra-fig">60.06</td>
-        <td class="fig cra-fig">84.08</td>
-        <td class="fig cra-tot">144.14</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">19.86</td>
-        <td class="fig rq-fig">27.82</td>
-        <td class="fig rq-tot">595.88</td>
+        <td class="fig">341.32</td>
+        <td class="fig">60.06</td>
+        <td class="fig">84.08</td>
+        <td class="fig cra-tot">485.46</td>
+        <td class="fig">435.24</td>
+        <td class="fig">274.10</td>
+        <td class="fig">274.10</td>
+        <td class="fig">19.86</td>
+        <td class="fig">27.82</td>
+        <td class="fig">76.24</td>
+        <td class="fig">194.04</td>
+        <td class="fig rq-tot">1,301.40</td>
         <td class="due">2026-05-15</td>
       </tr>
       <tr class="three">
         <th scope="row">May<span class="yr">2026</span></th>
-        <td class="pays">3<span class="flag">three pays</span></td>
+        <td class="pays">3<span class="flag">3 pays</span></td>
         <td class="fig">6,930.00</td>
-        <td class="fig cra-fig">90.09</td>
-        <td class="fig cra-fig">126.12</td>
-        <td class="fig cra-tot">216.21</td>
-        <td class="fig rq-fig">411.15</td>
-        <td class="fig rq-fig">411.15</td>
-        <td class="fig rq-fig">29.79</td>
-        <td class="fig rq-fig">41.73</td>
-        <td class="fig rq-tot">893.82</td>
+        <td class="fig">511.98</td>
+        <td class="fig">90.09</td>
+        <td class="fig">126.12</td>
+        <td class="fig cra-tot">728.19</td>
+        <td class="fig">652.86</td>
+        <td class="fig">411.15</td>
+        <td class="fig">411.15</td>
+        <td class="fig">29.79</td>
+        <td class="fig">41.73</td>
+        <td class="fig">114.36</td>
+        <td class="fig">291.06</td>
+        <td class="fig rq-tot">1,952.10</td>
         <td class="due">2026-06-15</td>
       </tr>
       <tr>
         <th scope="row">June<span class="yr">2026</span></th>
         <td class="pays">2</td>
         <td class="fig">4,620.00</td>
-        <td class="fig cra-fig">60.06</td>
-        <td class="fig cra-fig">84.08</td>
-        <td class="fig cra-tot">144.14</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">19.86</td>
-        <td class="fig rq-fig">27.82</td>
-        <td class="fig rq-tot">595.88</td>
+        <td class="fig">341.32</td>
+        <td class="fig">60.06</td>
+        <td class="fig">84.08</td>
+        <td class="fig cra-tot">485.46</td>
+        <td class="fig">435.24</td>
+        <td class="fig">274.10</td>
+        <td class="fig">274.10</td>
+        <td class="fig">19.86</td>
+        <td class="fig">27.82</td>
+        <td class="fig">76.24</td>
+        <td class="fig">194.04</td>
+        <td class="fig rq-tot">1,301.40</td>
         <td class="due">2026-07-15</td>
       </tr>
       <tr>
         <th scope="row">July<span class="yr">2026</span></th>
         <td class="pays">2</td>
         <td class="fig">4,620.00</td>
-        <td class="fig cra-fig">60.06</td>
-        <td class="fig cra-fig">84.08</td>
-        <td class="fig cra-tot">144.14</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">19.86</td>
-        <td class="fig rq-fig">27.82</td>
-        <td class="fig rq-tot">595.88</td>
+        <td class="fig">341.32</td>
+        <td class="fig">60.06</td>
+        <td class="fig">84.08</td>
+        <td class="fig cra-tot">485.46</td>
+        <td class="fig">435.24</td>
+        <td class="fig">274.10</td>
+        <td class="fig">274.10</td>
+        <td class="fig">19.86</td>
+        <td class="fig">27.82</td>
+        <td class="fig">76.24</td>
+        <td class="fig">194.04</td>
+        <td class="fig rq-tot">1,301.40</td>
         <td class="due">2026-08-17</td>
       </tr>
       <tr>
         <th scope="row">August<span class="yr">2026</span></th>
         <td class="pays">2</td>
         <td class="fig">4,620.00</td>
-        <td class="fig cra-fig">60.06</td>
-        <td class="fig cra-fig">84.08</td>
-        <td class="fig cra-tot">144.14</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">19.86</td>
-        <td class="fig rq-fig">27.82</td>
-        <td class="fig rq-tot">595.88</td>
+        <td class="fig">341.32</td>
+        <td class="fig">60.06</td>
+        <td class="fig">84.08</td>
+        <td class="fig cra-tot">485.46</td>
+        <td class="fig">435.24</td>
+        <td class="fig">274.10</td>
+        <td class="fig">274.10</td>
+        <td class="fig">19.86</td>
+        <td class="fig">27.82</td>
+        <td class="fig">76.24</td>
+        <td class="fig">194.04</td>
+        <td class="fig rq-tot">1,301.40</td>
         <td class="due">2026-09-15</td>
       </tr>
       <tr>
         <th scope="row">September<span class="yr">2026</span></th>
         <td class="pays">2</td>
         <td class="fig">4,620.00</td>
-        <td class="fig cra-fig">60.06</td>
-        <td class="fig cra-fig">84.08</td>
-        <td class="fig cra-tot">144.14</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">19.86</td>
-        <td class="fig rq-fig">27.82</td>
-        <td class="fig rq-tot">595.88</td>
+        <td class="fig">341.32</td>
+        <td class="fig">60.06</td>
+        <td class="fig">84.08</td>
+        <td class="fig cra-tot">485.46</td>
+        <td class="fig">435.24</td>
+        <td class="fig">274.10</td>
+        <td class="fig">274.10</td>
+        <td class="fig">19.86</td>
+        <td class="fig">27.82</td>
+        <td class="fig">76.24</td>
+        <td class="fig">194.04</td>
+        <td class="fig rq-tot">1,301.40</td>
         <td class="due">2026-10-15</td>
       </tr>
       <tr class="three">
         <th scope="row">October<span class="yr">2026</span></th>
-        <td class="pays">3<span class="flag">three pays</span></td>
+        <td class="pays">3<span class="flag">3 pays</span></td>
         <td class="fig">6,930.00</td>
-        <td class="fig cra-fig">90.09</td>
-        <td class="fig cra-fig">126.12</td>
-        <td class="fig cra-tot">216.21</td>
-        <td class="fig rq-fig">411.15</td>
-        <td class="fig rq-fig">411.15</td>
-        <td class="fig rq-fig">29.79</td>
-        <td class="fig rq-fig">41.73</td>
-        <td class="fig rq-tot">893.82</td>
+        <td class="fig">511.98</td>
+        <td class="fig">90.09</td>
+        <td class="fig">126.12</td>
+        <td class="fig cra-tot">728.19</td>
+        <td class="fig">652.86</td>
+        <td class="fig">411.15</td>
+        <td class="fig">411.15</td>
+        <td class="fig">29.79</td>
+        <td class="fig">41.73</td>
+        <td class="fig">114.36</td>
+        <td class="fig">291.06</td>
+        <td class="fig rq-tot">1,952.10</td>
         <td class="due">2026-11-16</td>
       </tr>
       <tr>
         <th scope="row">November<span class="yr">2026</span></th>
         <td class="pays">2</td>
         <td class="fig">4,620.00</td>
-        <td class="fig cra-fig">60.06</td>
-        <td class="fig cra-fig">84.08</td>
-        <td class="fig cra-tot">144.14</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">19.86</td>
-        <td class="fig rq-fig">27.82</td>
-        <td class="fig rq-tot">595.88</td>
+        <td class="fig">341.32</td>
+        <td class="fig">60.06</td>
+        <td class="fig">84.08</td>
+        <td class="fig cra-tot">485.46</td>
+        <td class="fig">435.24</td>
+        <td class="fig">274.10</td>
+        <td class="fig">274.10</td>
+        <td class="fig">19.86</td>
+        <td class="fig">27.82</td>
+        <td class="fig">76.24</td>
+        <td class="fig">194.04</td>
+        <td class="fig rq-tot">1,301.40</td>
         <td class="due">2026-12-15</td>
       </tr>
       <tr>
         <th scope="row">December<span class="yr">2026</span></th>
         <td class="pays">2</td>
         <td class="fig">4,620.00</td>
-        <td class="fig cra-fig">60.06</td>
-        <td class="fig cra-fig">84.08</td>
-        <td class="fig cra-tot">144.14</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">274.10</td>
-        <td class="fig rq-fig">19.86</td>
-        <td class="fig rq-fig">27.82</td>
-        <td class="fig rq-tot">595.88</td>
+        <td class="fig">341.32</td>
+        <td class="fig">60.06</td>
+        <td class="fig">84.08</td>
+        <td class="fig cra-tot">485.46</td>
+        <td class="fig">435.24</td>
+        <td class="fig">274.10</td>
+        <td class="fig">274.10</td>
+        <td class="fig">19.86</td>
+        <td class="fig">27.82</td>
+        <td class="fig">76.24</td>
+        <td class="fig">194.04</td>
+        <td class="fig rq-tot">1,301.40</td>
         <td class="due">2027-01-15</td>
       </tr>
       </tbody>
-      <tfoot>
-        <tr>
-          <th scope="row">Year</th>
-          <td class="pays">26</td>
-          <td class="fig">60,060.00</td>
-          <td class="fig">780.78</td>
-          <td class="fig">1,093.04</td>
-          <td class="fig cra-tot">1,873.82</td>
-          <td class="fig">3,563.30</td>
-          <td class="fig">3,563.30</td>
-          <td class="fig">258.18</td>
-          <td class="fig">361.66</td>
-          <td class="fig rq-tot">7,746.44</td>
-          <td class="due">—</td>
-        </tr>
-      </tfoot>
+      <tfoot><tr>
+        <th scope="row">Year</th><td class="pays">26</td><td class="fig">60,060.00</td>
+        <td class="fig">4,437.16</td><td class="fig">780.78</td><td class="fig">1,093.04</td>
+        <td class="fig cra-tot">6,310.98</td>
+        <td class="fig">5,658.12</td><td class="fig">3,563.30</td><td class="fig">3,563.30</td>
+        <td class="fig">258.18</td><td class="fig">361.66</td><td class="fig">991.12</td>
+        <td class="fig">2,522.52</td><td class="fig rq-tot">16,918.20</td><td class="due">—</td>
+      </tr></tfoot>
     </table>
   </div>
 </section>
 
-<!-- ── 4. How each figure is derived ─────────────────────────────────── -->
+<!-- 5 — derivation -->
 <section>
   <div class="shead"><h2>How each figure is derived</h2><div class="rule"></div>
     <span class="meta">published 2026 rates</span></div>
-  <p class="snote">Every amount above comes from one of these six calculations. Each rate is checked
-    against the published annual maximum, so a wrong rate or a wrong ceiling shows up immediately.</p>
+  <p class="snote">Income tax comes from the payroll calculators and cannot be derived from a rate.
+    Everything else is one of these calculations, each checked against its published annual maximum.</p>
 
   <div class="derive">
+    <div class="drow cra">
+      <div class="dt-h"><span class="name">Federal income tax</span><span class="to">→ CRA</span></div>
+      <div class="calc">from PDOC — not rate-derivable</div>
+      <div class="res"><span>Per pay</span><b>$170.66</b></div>
+      <div class="res"><span>× 26 periods</span><b>$4,437.16</b></div>
+      <div class="cap">Depends on the whole TD1 picture. Matches the accountant exactly.</div>
+    </div>
+    <div class="drow rq">
+      <div class="dt-h"><span class="name">Québec income tax</span><span class="to">→ Revenu Québec</span></div>
+      <div class="calc">from WebRAS — not rate-derivable</div>
+      <div class="res"><span>Per pay</span><b>$217.62</b></div>
+      <div class="res"><span>× 26 periods</span><b>$5,658.12</b></div>
+      <div class="cap">PDOC does not calculate Québec tax at all. Matches the accountant exactly.</div>
+    </div>
     <div class="drow cra">
       <div class="dt-h"><span class="name">EI — employee</span><span class="to">→ CRA</span></div>
       <div class="calc">2,310.00 × 1.30% = 30.03</div>
       <div class="res"><span>Per pay</span><b>$30.03</b></div>
       <div class="res"><span>× 26 periods</span><b>$780.78</b></div>
-      <div class="cap">Reduced Québec rate — Québec employees pay less than the rest of Canada because
-        QPIP covers parental benefits. Max insurable $68,900.00; annual gross is below it.</div>
+      <div class="cap">Reduced Québec rate — lower than the rest of Canada because QPIP covers parental
+        benefits. Max insurable $68,900.00.</div>
     </div>
-
     <div class="drow cra">
       <div class="dt-h"><span class="name">EI — employer</span><span class="to">→ CRA</span></div>
       <div class="calc">30.03 × 1.4 = 42.04</div>
       <div class="res"><span>Per pay</span><b>$42.04</b></div>
       <div class="res"><span>× 26 periods</span><b>$1,093.04</b></div>
-      <div class="cap">The employer pays 1.4× the employee premium. This is an employer cost, never
-        deducted from the employee's pay.</div>
+      <div class="cap">The line absent from the accountant's statement.</div>
     </div>
-
     <div class="drow rq">
       <div class="dt-h"><span class="name">QPP — employee</span><span class="to">→ Revenu Québec</span></div>
       <div class="calc">(2,310.00 − 134.62) × 6.30% = 137.05</div>
       <div class="res"><span>Per pay</span><b>$137.05</b></div>
       <div class="res"><span>× 26 periods</span><b>$3,563.30</b></div>
-      <div class="cap">6.30% is 5.30% base + 1.00% first additional. The $3,500.00 basic
-        exemption is prorated across the 26 periods. Max pensionable $74,600.00.</div>
+      <div class="cap">6.30% is 5.30% base + 1.00% first additional. The $3,500.00
+        basic exemption is prorated across the 26 periods. Max pensionable $74,600.00.</div>
     </div>
-
     <div class="drow rq">
       <div class="dt-h"><span class="name">QPP — employer</span><span class="to">→ Revenu Québec</span></div>
       <div class="calc">matches employee 1 : 1 = 137.05</div>
       <div class="res"><span>Per pay</span><b>$137.05</b></div>
       <div class="res"><span>× 26 periods</span><b>$3,563.30</b></div>
-      <div class="cap">Doubling QPP is what makes the provincial remittance the larger of the two —
-        $7,126.60 of the $7,746.44 total.</div>
+      <div class="cap">Doubling QPP contributes $7,126.60 of the $16,918.20
+        provincial total.</div>
     </div>
-
     <div class="drow rq">
-      <div class="dt-h"><span class="name">QPIP — employee</span><span class="to">→ Revenu Québec</span></div>
-      <div class="calc">2,310.00 × 0.430% = 9.93</div>
-      <div class="res"><span>Per pay</span><b>$9.93</b></div>
-      <div class="res"><span>× 26 periods</span><b>$258.18</b></div>
-      <div class="cap">Québec Parental Insurance. No basic exemption. Max insurable $103,000.00.</div>
+      <div class="dt-h"><span class="name">QPIP — employee / employer</span><span class="to">→ Revenu Québec</span></div>
+      <div class="calc">2,310.00 × 0.430% = 9.93 · × 0.602% = 13.91</div>
+      <div class="res"><span>Per pay, combined</span><b>$23.84</b></div>
+      <div class="res"><span>× 26 periods</span><b>$619.84</b></div>
+      <div class="cap">No basic exemption. The employer rate is higher than the employee rate, unlike
+        QPP. Max insurable $103,000.00.</div>
     </div>
-
     <div class="drow rq">
-      <div class="dt-h"><span class="name">QPIP — employer</span><span class="to">→ Revenu Québec</span></div>
-      <div class="calc">2,310.00 × 0.602% = 13.91</div>
-      <div class="res"><span>Per pay</span><b>$13.91</b></div>
-      <div class="res"><span>× 26 periods</span><b>$361.66</b></div>
-      <div class="cap">The employer rate is higher than the employee rate, unlike QPP.</div>
+      <div class="dt-h"><span class="name">QHSF and CNESST</span><span class="to">→ Revenu Québec</span></div>
+      <div class="calc">2,310.00 × 1.65% = 38.12 · × 4.20% = 97.02</div>
+      <div class="res"><span>Per pay, combined</span><b>$135.14</b></div>
+      <div class="res"><span>× 26 periods</span><b>$3,513.64</b></div>
+      <div class="cap">Employer-only, on total payroll, both remitted periodically to Revenu Québec.
+        Rates back-solved from the accountant's figures — QHSF depends on total payroll and sector,
+        CNESST on your classification unit, so neither is a standard rate.</div>
     </div>
-  </div>
-
-  <div class="tscroll" style="margin-top:16px;">
-    <table class="grid" style="min-width:640px;">
-      <caption>Rate check — the configured rate × ceiling must reproduce the published annual maximum.</caption>
-      <thead><tr>
-        <th scope="col">Contribution</th><th scope="col">Rate</th><th scope="col" class="fig">Ceiling</th>
-        <th scope="col" class="fig">Annual maximum</th><th scope="col">Binds this year?</th>
-      </tr></thead>
-      <tbody>
-        <tr><th scope="row">QPP</th><td class="fig">6.30%</td><td class="fig">74,600.00</td>
-          <td class="fig">4,479.30</td><td>No — gross is $60,060.00</td></tr>
-        <tr><th scope="row">QPP2 (second tier)</th><td class="fig">4.00%</td><td class="fig">85,000.00</td>
-          <td class="fig">416.00</td><td>No — applies only above $74,600.00</td></tr>
-        <tr><th scope="row">EI (Québec)</th><td class="fig">1.30%</td><td class="fig">68,900.00</td>
-          <td class="fig">895.70</td><td>No — gross is $60,060.00</td></tr>
-        <tr><th scope="row">QPIP</th><td class="fig">0.430%</td><td class="fig">103,000.00</td>
-          <td class="fig">442.90</td><td>No — gross is $60,060.00</td></tr>
-      </tbody>
-    </table>
   </div>
 </section>
 
-<!-- ── 5. Full register ──────────────────────────────────────────────── -->
+<!-- 6 — register -->
 <section>
-  <div class="shead"><h2>All 26 pay periods</h2><div class="rule"></div>
-    <span class="meta">register</span></div>
-  <p class="snote">Period 1 is short — it runs from the 2026-01-01 start date to the first pay date.
-    The salary is fixed regardless, so the deductions are the same as every other period.</p>
+  <div class="shead"><h2>All 26 pay periods</h2><div class="rule"></div><span class="meta">register</span></div>
+  <p class="snote">Period 1 is short — it runs from the 2026-01-01 start date to the first pay date. The
+    salary is fixed regardless, so the deductions are the same as every other period.</p>
 
   <div class="tscroll">
     <table class="grid">
-      <caption>Employee deductions, employer contributions, and the resulting remittance to each agency.</caption>
+      <caption>Withheld from the employee, contributed by the employer, and the resulting remittance to each agency.</caption>
       <thead>
-        <tr class="band">
-          <th colspan="4"></th>
-          <th colspan="4">Withheld from employee</th>
-          <th colspan="3">Employer contributions</th>
-          <th colspan="2">Remittance</th>
-          <th></th>
-        </tr>
+        <tr class="band"><th colspan="4"></th><th colspan="6">Withheld from employee</th>
+          <th colspan="5">Employer contributions</th><th colspan="2">Remittance</th></tr>
         <tr>
           <th scope="col">#</th><th scope="col">Pay period</th><th scope="col">Pay date</th>
           <th scope="col" class="fig">Gross</th>
+          <th scope="col" class="fig">Fed tax</th><th scope="col" class="fig">QC tax</th>
           <th scope="col" class="fig">QPP</th><th scope="col" class="fig">EI</th>
           <th scope="col" class="fig">QPIP</th><th scope="col" class="fig">Total</th>
-          <th scope="col" class="fig">QPP</th><th scope="col" class="fig">EI</th><th scope="col" class="fig">QPIP</th>
+          <th scope="col" class="fig">Net pay</th>
+          <th scope="col" class="fig">QPP</th><th scope="col" class="fig">EI</th>
+          <th scope="col" class="fig">QPIP</th><th scope="col" class="fig">QHSF</th>
+          <th scope="col" class="fig">CNESST</th>
           <th scope="col" class="fig cra-tot">CRA</th><th scope="col" class="fig rq-tot">RQ</th>
-          <th scope="col" class="fig">YTD gross</th>
         </tr>
       </thead>
       <tbody>
@@ -660,502 +752,568 @@
         <td class="dt">2026-01-01 → 2026-01-09</td>
         <td class="dt strong">2026-01-09</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">2,310.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">2</td>
         <td class="dt">2026-01-10 → 2026-01-23</td>
         <td class="dt strong">2026-01-23</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">4,620.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">3</td>
         <td class="dt">2026-01-24 → 2026-02-06</td>
         <td class="dt strong">2026-02-06</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">6,930.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">4</td>
         <td class="dt">2026-02-07 → 2026-02-20</td>
         <td class="dt strong">2026-02-20</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">9,240.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">5</td>
         <td class="dt">2026-02-21 → 2026-03-06</td>
         <td class="dt strong">2026-03-06</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">11,550.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">6</td>
         <td class="dt">2026-03-07 → 2026-03-20</td>
         <td class="dt strong">2026-03-20</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">13,860.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">7</td>
         <td class="dt">2026-03-21 → 2026-04-03</td>
         <td class="dt strong">2026-04-03</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">16,170.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">8</td>
         <td class="dt">2026-04-04 → 2026-04-17</td>
         <td class="dt strong">2026-04-17</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">18,480.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">9</td>
         <td class="dt">2026-04-18 → 2026-05-01</td>
         <td class="dt strong">2026-05-01</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">20,790.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">10</td>
         <td class="dt">2026-05-02 → 2026-05-15</td>
         <td class="dt strong">2026-05-15</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">23,100.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">11</td>
         <td class="dt">2026-05-16 → 2026-05-29</td>
         <td class="dt strong">2026-05-29</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">25,410.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">12</td>
         <td class="dt">2026-05-30 → 2026-06-12</td>
         <td class="dt strong">2026-06-12</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">27,720.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">13</td>
         <td class="dt">2026-06-13 → 2026-06-26</td>
         <td class="dt strong">2026-06-26</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">30,030.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">14</td>
         <td class="dt">2026-06-27 → 2026-07-10</td>
         <td class="dt strong">2026-07-10</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">32,340.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">15</td>
         <td class="dt">2026-07-11 → 2026-07-24</td>
         <td class="dt strong">2026-07-24</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">34,650.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">16</td>
         <td class="dt">2026-07-25 → 2026-08-07</td>
         <td class="dt strong">2026-08-07</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">36,960.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">17</td>
         <td class="dt">2026-08-08 → 2026-08-21</td>
         <td class="dt strong">2026-08-21</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">39,270.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">18</td>
         <td class="dt">2026-08-22 → 2026-09-04</td>
         <td class="dt strong">2026-09-04</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">41,580.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">19</td>
         <td class="dt">2026-09-05 → 2026-09-18</td>
         <td class="dt strong">2026-09-18</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">43,890.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">20</td>
         <td class="dt">2026-09-19 → 2026-10-02</td>
         <td class="dt strong">2026-10-02</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">46,200.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">21</td>
         <td class="dt">2026-10-03 → 2026-10-16</td>
         <td class="dt strong">2026-10-16</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">48,510.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">22</td>
         <td class="dt">2026-10-17 → 2026-10-30</td>
         <td class="dt strong">2026-10-30</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">50,820.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">23</td>
         <td class="dt">2026-10-31 → 2026-11-13</td>
         <td class="dt strong">2026-11-13</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">53,130.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">24</td>
         <td class="dt">2026-11-14 → 2026-11-27</td>
         <td class="dt strong">2026-11-27</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">55,440.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">25</td>
         <td class="dt">2026-11-28 → 2026-12-11</td>
         <td class="dt strong">2026-12-11</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">57,750.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       <tr>
         <td class="pn">26</td>
         <td class="dt">2026-12-12 → 2026-12-25</td>
         <td class="dt strong">2026-12-25</td>
         <td class="fig">2,310.00</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">30.03</td>
-        <td class="fig rq-fig">9.93</td>
-        <td class="fig strong">177.01</td>
-        <td class="fig rq-fig">137.05</td>
-        <td class="fig cra-fig">42.04</td>
-        <td class="fig rq-fig">13.91</td>
-        <td class="fig cra-tot">72.07</td>
-        <td class="fig rq-tot">297.94</td>
-        <td class="fig ytd">60,060.00</td>
+        <td class="fig">170.66</td>
+        <td class="fig">217.62</td>
+        <td class="fig">137.05</td>
+        <td class="fig">30.03</td>
+        <td class="fig">9.93</td>
+        <td class="fig strong">565.29</td>
+        <td class="fig net">1,744.71</td>
+        <td class="fig">137.05</td>
+        <td class="fig">42.04</td>
+        <td class="fig">13.91</td>
+        <td class="fig">38.12</td>
+        <td class="fig">97.02</td>
+        <td class="fig cra-tot">242.73</td>
+        <td class="fig rq-tot">650.70</td>
       </tr>
       </tbody>
-      <tfoot>
-        <tr>
-          <td class="pn">—</td><td class="dt">2026 total</td><td class="dt">26 pays</td>
-          <td class="fig">60,060.00</td>
-          <td class="fig">3,563.30</td><td class="fig">780.78</td>
-          <td class="fig">258.18</td><td class="fig">4,602.26</td>
-          <td class="fig">3,563.30</td><td class="fig">1,093.04</td><td class="fig">361.66</td>
-          <td class="fig cra-tot">1,873.82</td><td class="fig rq-tot">7,746.44</td>
-          <td class="fig">60,060.00</td>
-        </tr>
-      </tfoot>
+      <tfoot><tr>
+        <td class="pn">—</td><td class="dt">2026 total</td><td class="dt">26 pays</td>
+        <td class="fig">60,060.00</td>
+        <td class="fig">4,437.16</td><td class="fig">5,658.12</td><td class="fig">3,563.30</td>
+        <td class="fig">780.78</td><td class="fig">258.18</td><td class="fig">14,697.54</td>
+        <td class="fig net">45,362.46</td>
+        <td class="fig">3,563.30</td><td class="fig">1,093.04</td><td class="fig">361.66</td>
+        <td class="fig">991.12</td><td class="fig">2,522.52</td>
+        <td class="fig cra-tot">6,310.98</td><td class="fig rq-tot">16,918.20</td>
+      </tr></tfoot>
     </table>
   </div>
 </section>
 
-<!-- ── 6. Reconciliation ─────────────────────────────────────────────── -->
+<!-- 7 — reconciliation -->
 <section>
-  <div class="shead"><h2>Annual reconciliation</h2><div class="rule"></div>
-    <span class="meta">2026</span></div>
-  <p class="snote">Every dollar of statutory contribution is either withheld from the employee or paid
-    on top by the employer, and all of it lands at one of the two agencies. The two views tie.</p>
+  <div class="shead"><h2>Annual reconciliation</h2><div class="rule"></div><span class="meta">2026</span></div>
+  <p class="snote">Every dollar remitted is either withheld from the employee or paid on top by the
+    employer, and all of it lands at one of the two agencies. The two views tie.</p>
 
   <div class="split">
     <div class="recon">
-      <div class="rrow"><div class="rlabel">Withheld from employee<small>QPP + EI + QPIP</small></div>
-        <div class="rval">$4,602.26</div></div>
-      <div class="rrow"><div class="rlabel">Paid by employer<small>QPP + EI + QPIP, employer share</small></div>
-        <div class="rval">$5,018.00</div></div>
-      <div class="rrow tot"><div class="rlabel">Total statutory contributions</div>
-        <div class="rval">$9,620.26</div></div>
+      <div class="rrow"><div class="rlabel">Withheld from employee<small>income tax + QPP + EI + QPIP</small></div>
+        <div class="rval">$14,697.54</div></div>
+      <div class="rrow"><div class="rlabel">Paid by employer<small>QPP + EI + QPIP + QHSF + CNESST</small></div>
+        <div class="rval">$8,531.64</div></div>
+      <div class="rrow tot"><div class="rlabel">Total remitted</div><div class="rval">$23,229.18</div></div>
     </div>
-
     <div class="recon">
-      <div class="rrow"><div class="rlabel">Remitted to the CRA<small>EI, both shares</small></div>
-        <div class="rval cra-c">$1,873.82</div></div>
-      <div class="rrow"><div class="rlabel">Remitted to Revenu Québec<small>QPP + QPIP, both shares</small></div>
-        <div class="rval rq-c">$7,746.44</div></div>
-      <div class="rrow tot"><div class="rlabel">Total statutory contributions</div>
-        <div class="rval">$9,620.26</div></div>
+      <div class="rrow"><div class="rlabel">To the CRA<small>federal tax + EI, both shares</small></div>
+        <div class="rval cra-c">$6,310.98</div></div>
+      <div class="rrow"><div class="rlabel">To Revenu Québec<small>QC tax, QPP, QPIP, QHSF, CNESST</small></div>
+        <div class="rval rq-c">$16,918.20</div></div>
+      <div class="rrow tot"><div class="rlabel">Total remitted</div><div class="rval">$23,229.18</div></div>
     </div>
   </div>
 
   <div class="recon" style="margin-top:16px;">
     <div class="rrow"><div class="rlabel">Gross salary<small>26 × $2,310.00</small></div>
       <div class="rval">$60,060.00</div></div>
-    <div class="rrow"><div class="rlabel">Employee net, before income tax<small>gross less $4,602.26 withheld — income tax still comes off this</small></div>
-      <div class="rval">$55,457.74</div></div>
-    <div class="rrow tot"><div class="rlabel">Total cost to the employer<small>salary + $5,018.00 employer contributions, excluding any Health Services Fund</small></div>
-      <div class="rval">$65,078.00</div></div>
-  </div>
-</section>
-
-<!-- ── 7. Not included ───────────────────────────────────────────────── -->
-<section>
-  <div class="shead"><h2>Not included — and why</h2><div class="rule"></div>
-    <span class="meta">3 figures outstanding</span></div>
-  <p class="snote">These are real obligations that the numbers above do <strong>not</strong> cover.
-    Treating the totals as complete would under-remit. Each one has to come from a source this
-    calculation can't derive.</p>
-
-  <div class="pending-wrap">
-    <div class="pcard cra">
-      <div class="to">→ CRA</div>
-      <h4>Federal income tax</h4>
-      <div class="amt-x">not supplied</div>
-      <p>Depends on the whole TD1 picture, not on a rate that can be applied to salary. Run the CRA's
-        <strong>PDOC</strong> for $2,310.00 biweekly and add the per-period amount to every
-        CRA figure on this page.</p>
-    </div>
-    <div class="pcard rq">
-      <div class="to">→ Revenu Québec</div>
-      <h4>Québec income tax</h4>
-      <div class="amt-x">not supplied</div>
-      <p>PDOC does not calculate Québec provincial tax at all — it reports <span class="fig">N/A</span>.
-        Use Revenu Québec's <strong>WebRAS</strong> and add that amount to every RQ figure.</p>
-    </div>
-    <div class="pcard rq">
-      <div class="to">→ Revenu Québec</div>
-      <h4>Health Services Fund</h4>
-      <div class="amt-x">rate needed</div>
-      <p>An employer contribution on total payroll, remitted alongside the source deductions. The rate
-        depends on your total payroll and sector. <strong>CNESST</strong> is separate again — an
-        insurance premium, not a source deduction.</p>
-    </div>
+    <div class="rrow"><div class="rlabel">Employee takes home<small>26 × $1,744.71</small></div>
+      <div class="rval ok">$45,362.46</div></div>
+    <div class="rrow"><div class="rlabel">Remitted to government<small>38.7% of gross salary, across both agencies</small></div>
+      <div class="rval">$23,229.18</div></div>
+    <div class="rrow tot"><div class="rlabel">Total cost to the employer<small>salary + $8,531.64 in employer contributions — 114.2% of gross, or $2,638.14 per pay</small></div>
+      <div class="rval">$68,591.64</div></div>
   </div>
 </section>
 
@@ -1163,17 +1321,18 @@
   <div class="legend">
     <span><i class="c"></i> Canada Revenue Agency</span>
     <span><i class="r"></i> Revenu Québec</span>
-    <span><i class="p"></i> Not supplied — you must add it</span>
+    <span><i class="w"></i> Differs from the accountant's statement</span>
   </div>
-  <p><strong>Basis.</strong> One input is taken as given: the $2,310.00 biweekly salary. Every
-    other figure on this page is computed from the published 2026 rate tables, not inferred from a
-    payroll calculator's output. Each rate is cross-checked against its published annual maximum.</p>
+  <p><strong>Basis.</strong> The $2,310.00 biweekly salary and the two income tax amounts are taken
+    as given. Contribution rates come from the published 2026 tables and are cross-checked against their
+    annual maximums; the QHSF and CNESST rates (1.65% and 4.20%) are
+    back-solved from the accountant's per-pay figures, since both are employer-specific.</p>
   <p><strong>Rounding.</strong> Each period is rounded to the cent independently and annual totals are
     the sum of those rounded periods, which is how source deductions are actually remitted. This can
     differ by a cent or two from rate × annual earnings.</p>
-  <p><strong>Check before you remit.</strong> Rates and ceilings change every January. Due dates here
-    roll forward off weekends but do not account for statutory holidays. Confirm the figures against
-    PDOC and your remitter frequency — the CRA and Revenu Québec assign those independently, so yours
+  <p><strong>Before you remit.</strong> Confirm the employer EI line with your accountant. Rates and
+    ceilings change every January. Due dates here roll forward off weekends but do not account for
+    statutory holidays, and the CRA and Revenu Québec assign remitter frequency independently — yours
     may not both be monthly.</p>
 </footer>
 
