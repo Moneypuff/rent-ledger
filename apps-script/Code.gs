@@ -136,6 +136,47 @@ function doGet(e) {
   }
 }
 
+/** Edits landing within this window of the last write update that row instead of adding one. */
+var COALESCE_WINDOW_MS = 30 * 60 * 1000;
+
+/** Compare sheet values to freshly-built ones without tripping over types. */
+function cellKey_(v) {
+  if (Object.prototype.toString.call(v) === '[object Date]') {
+    return Utilities.formatDate(v, ss_().getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+  }
+  if (typeof v === 'number') return String(v);
+  return normalizeText_(v);
+}
+
+/**
+ * Looks at the newest existing row for this tenant-month and decides what the
+ * incoming save should do:
+ *   identical -> nothing changed, don't write at all
+ *   rowIndex  -> still the same editing session, overwrite that row
+ *   neither   -> a genuinely new entry, append
+ */
+function findPriorRow_(sheet, row) {
+  var last = sheet.getLastRow();
+  if (last < 2) return { rowIndex: 0, identical: false };
+
+  var width = COLLECTION_HEADERS.length;
+  var values = sheet.getRange(2, 1, last - 1, width).getValues();
+  for (var i = values.length - 1; i >= 0; i--) {
+    var v = values[i];
+    if (collectionKey_(v[1], v[2], v[3]) !== collectionKey_(row[1], row[2], row[3])) continue;
+
+    var identical = true;
+    for (var c = 1; c < width; c++) {
+      if (cellKey_(v[c]) !== cellKey_(row[c])) { identical = false; break; }
+    }
+    if (identical) return { rowIndex: i + 2, identical: true };
+
+    var age = new Date().getTime() - new Date(v[0]).getTime();
+    return { rowIndex: age <= COALESCE_WINDOW_MS ? i + 2 : 0, identical: false };
+  }
+  return { rowIndex: 0, identical: false };
+}
+
 function doPost(e) {
   try {
     var body = JSON.parse(e.postData.contents);
@@ -151,31 +192,43 @@ function doPost(e) {
     if (!tenant) return jsonOut_({ error: 'unknown tenant' });
 
     var expected = expectedFor_(tenant.BaseRent, tenant.TaxRatePct, tenant.Type);
-
-    sheets.collections.appendRow([
-      new Date(), body.month, normalizeText_(tenant.Name), normalizeText_(tenant.Unit), normalizeType_(tenant.Type),
+    var row = [
+      new Date(), normalizeText_(body.month), normalizeText_(tenant.Name), normalizeText_(tenant.Unit), normalizeType_(tenant.Type),
       Number(tenant.BaseRent) || 0, Number(tenant.TaxRatePct) || 0, expected,
-      Number(body.collected) || 0, body.status || 'unpaid',
-      body.datePaid || '', body.method || '', body.comment || ''
-    ]);
+      Number(body.collected) || 0, normalizeText_(body.status) || 'unpaid',
+      normalizeText_(body.datePaid), normalizeText_(body.method), normalizeText_(body.comment)
+    ];
 
-    return jsonOut_({ ok: true, expected: expected });
+    // The client coalesces edits, but an old cached tab on another device
+    // doesn't know that. Enforce one row per tenant-month editing session here
+    // too, so duplicates can't come back from a stale front end.
+    var prior = findPriorRow_(sheets.collections, row);
+    if (prior.identical) return jsonOut_({ ok: true, expected: expected, wrote: 'unchanged' });
+    if (prior.rowIndex) {
+      sheets.collections.getRange(prior.rowIndex, 1, 1, row.length).setValues([row]);
+      return jsonOut_({ ok: true, expected: expected, wrote: 'updated' });
+    }
+    sheets.collections.appendRow(row);
+    return jsonOut_({ ok: true, expected: expected, wrote: 'appended' });
   } catch (err) {
     return jsonOut_({ error: String(err) });
   }
 }
 
 /**
- * Optional tidy-up, run by hand from the editor. Keeps the newest Collections
- * row for each Month+Name+Unit — the one the app already treats as current —
- * and moves every superseded row to a Collections_Superseded tab. Nothing is
- * deleted, so the audit trail survives; the Collections tab just becomes
- * readable again. Take File > Make a copy first if you want a belt and braces.
+ * Deletes duplicate Collections rows, run by hand from the editor. For each
+ * Month+Name+Unit it keeps the newest row — the one the app already treats as
+ * current, holding your final corrections — and deletes the rest.
+ *
+ * This is destructive and cannot be undone from the app. Take File > Make a
+ * copy first. Safe to run more than once; a second run finds nothing to do.
  */
 function dedupeCollections() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(SHEET_COLLECTIONS);
-  if (!sheet || sheet.getLastRow() < 2) return;
+  var sheet = ss_().getSheetByName(SHEET_COLLECTIONS);
+  if (!sheet || sheet.getLastRow() < 2) {
+    Logger.log('Nothing to do — Collections is empty.');
+    return;
+  }
 
   var values = sheet.getDataRange().getValues();
   var headers = values[0];
@@ -187,7 +240,7 @@ function dedupeCollections() {
 
   var newestAt = {};
   body.forEach(function (row, i) {
-    var key = toMonthKeyText_(row[col.Month]) + '::' + normalizeText_(row[col.Name]) + '::' + normalizeText_(row[col.Unit]);
+    var key = collectionKey_(row[col.Month], row[col.Name], row[col.Unit]);
     var prev = newestAt[key];
     if (prev === undefined || new Date(row[col.Timestamp]) >= new Date(body[prev][col.Timestamp])) newestAt[key] = i;
   });
@@ -195,21 +248,19 @@ function dedupeCollections() {
   var keepIdx = {};
   Object.keys(newestAt).forEach(function (k) { keepIdx[newestAt[k]] = true; });
   var keep = body.filter(function (row, i) { return keepIdx[i]; });
-  var superseded = body.filter(function (row, i) { return !keepIdx[i]; });
-  if (!superseded.length) return;
-
-  var archive = ss.getSheetByName('Collections_Superseded');
-  if (!archive) {
-    archive = ss.insertSheet('Collections_Superseded');
-    archive.appendRow(headers);
-    archive.setFrozenRows(1);
+  var removed = body.length - keep.length;
+  if (!removed) {
+    Logger.log('No duplicates found — all ' + keep.length + ' rows are already unique per tenant-month.');
+    return;
   }
-  archive.getRange(archive.getLastRow() + 1, 1, superseded.length, headers.length).setValues(superseded);
 
   sheet.getRange(2, 1, sheet.getMaxRows() - 1, headers.length).clearContent();
-  if (keep.length) sheet.getRange(2, 1, keep.length, headers.length).setValues(keep);
+  sheet.getRange(2, 1, keep.length, headers.length).setValues(keep);
+  Logger.log('Deleted ' + removed + ' duplicate rows; kept ' + keep.length + ' (one per tenant per month).');
+}
 
-  Logger.log('Kept ' + keep.length + ' current rows; archived ' + superseded.length + ' superseded rows.');
+function collectionKey_(month, name, unit) {
+  return toMonthKeyText_(month) + '::' + normalizeText_(name) + '::' + normalizeText_(unit);
 }
 
 /** Month is written as text, but tolerate a cell Sheets has turned into a date. */

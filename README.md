@@ -68,18 +68,28 @@ and then written as **one** row. A save is also skipped entirely when nothing
 actually changed, so opening the page and tabbing through cards appends
 nothing.
 
-That matters because `Collections` is append-only. Earlier versions saved on
-every field change and on every pause while typing a comment, so one tenant
-could produce seven rows in a single sitting. The app itself was never
-confused — it always reads the newest row per tenant per month — but the tab
-was miserable to read.
+The backend enforces the same rule independently: a save that lands within 30
+minutes of the previous one for the same tenant and month **overwrites** that
+row instead of adding another, and a save identical to what's already stored
+writes nothing at all. So a stale browser tab on another device can't
+reintroduce duplicates either. Saves in a later session, or for a different
+month, still append as normal — month-to-month history is untouched.
 
-To tidy up rows written by the old behaviour, open the Apps Script editor,
-choose **`dedupeCollections`** in the function dropdown and click **Run**. It
-keeps the newest row for each tenant-month (the one the app already treats as
-current) and moves the superseded ones to a `Collections_Superseded` tab.
-Nothing is deleted. It's safe to run more than once, and a
-**File → Make a copy** beforehand costs nothing.
+This matters because earlier versions saved on every field change and on every
+pause while typing a comment, so one tenant could produce seven rows in a
+single sitting. The app was never confused — it always reads the newest row
+per tenant-month — but the tab was miserable to read.
+
+### Cleaning up duplicates already in the Sheet
+
+Open the Apps Script editor, choose **`dedupeCollections`** in the function
+dropdown, click **Run**, then check **View → Logs** for the count. For each
+tenant-month it keeps the newest row — the one the app already treats as
+current, holding your final corrections — and **deletes** the rest.
+
+This is destructive and can't be undone from the app, so take
+**File → Make a copy** first. Running it twice is harmless; the second run
+reports nothing to do.
 
 ## Editing rent amounts mid-lease
 
