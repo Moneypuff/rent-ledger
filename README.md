@@ -140,6 +140,36 @@ roll forward off weekends; **statutory holidays are not in the table**, so check
 due date that lands on one. Tick "Remitted" as you pay each one — the marks are
 stored in your browser, and the "Outstanding" figure covers both agencies.
 
+### Clerical correction — pays #1–#15
+
+Pays **#1–#15** (2026-01-09 to 2026-07-24) were run through the CRA payroll
+calculator, which computes federal tax, QPP and EI but **not Québec income tax and
+not QPIP**. Neither was deducted, so **$1,972.26** was paid each time instead of
+**$1,744.71** — $227.55 per pay, **$3,413.25** across the fifteen.
+
+| | Not withheld |
+|---|---|
+| Québec income tax | $3,264.30 |
+| QPIP | $148.95 |
+| **Owed back by the employee** | **$3,413.25** |
+
+The paystubs for those periods show the amounts **actually withheld**, flagged, not
+the corrected ones — a paystub records a payment that happened, and restating it
+would misrepresent it. `payroll-2026-paystubs.html` is the full 26-stub set.
+
+**The remittance ledger is unaffected.** The employer owes Revenu Québec what should
+have been withheld whether or not it actually was, so the figures were always the
+correct liability. If the remittances were also made on the short basis they are in
+arrears by the same amount, and interest may apply — worth checking, since the RQ
+remittance is $650.70 per pay against the $274.10 the same wrong basis would suggest.
+
+To recover it over the 11 remaining pays: an extra $310.30 on each of the next 10 and
+$310.25 on the last, taking net pay to $1,434.41 then $1,434.46. That restores the
+correct annual net of $45,362.46 exactly. Confirm with your accountant first.
+
+The Settings panel has a **Clerical correction** block recording what was really
+withheld; set the period count to 0 when there is nothing to restate.
+
 ### The rest
 
 - **Paystubs** — one per pay period, current and year-to-date columns, employer
