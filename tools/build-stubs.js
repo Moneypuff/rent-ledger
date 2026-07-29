@@ -8,7 +8,7 @@ const m = n => '$' + f(n);
 const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
 const t = d.totals, P = d.periods;
 
-const EMPLOYER = { name: '9134-5777 Québec Inc.', addr: '1560 Trepanier, Montréal, QC' };
+const EMPLOYER = { name: '9134-5777 Québec Inc.', addr: '10624 boul. Lévesque E, Laval, Québec H7A 4C6' };
 const EMPLOYEE = 'Dieu-Quan Ly';
 
 const restated = P.filter(p => p.restated);
