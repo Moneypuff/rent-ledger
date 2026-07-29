@@ -155,7 +155,9 @@ not QPIP**. Neither was deducted, so **$1,972.26** was paid each time instead of
 
 The paystubs for those periods show the amounts **actually withheld**, flagged, not
 the corrected ones — a paystub records a payment that happened, and restating it
-would misrepresent it. `payroll-2026-paystubs.html` is the full 26-stub set.
+would misrepresent it. `payroll-2026-paystubs.html` is the full 26-stub set for
+**Dieu-Quan Ly**, with `payroll-2026-paystubs.pdf` alongside it — 27 pages, one stub
+per page. Regenerate the PDF by printing the page to PDF, or with the build scripts.
 
 **The remittance ledger is unaffected.** The employer owes Revenu Québec what should
 have been withheld whether or not it actually was, so the figures were always the
@@ -200,6 +202,16 @@ and due dates, ceiling behaviour, rounding, YTD integrity and disclosure of
 defaulted-to-zero figures. It verifies by executing rather than reading, and it will
 not invent a statutory rate to check against — an unverifiable rate is reported as a
 finding rather than silently confirmed.
+
+### Typography
+
+The two document pages embed **IBM Plex Serif** and **IBM Plex Mono**, subset to the
+glyphs they use and inlined as `woff2` data URIs (~42 KB for four faces). They are
+inlined rather than linked because a font CDN is blocked by the artifact CSP and
+would fall back silently — inlining also means the PDF renders with the same faces
+as the screen. Plex Serif carries the text, Plex Mono every figure and every
+uppercase field label, which keeps the documents to one superfamily and reads as a
+payroll record rather than a web page.
 
 ## Local development
 
