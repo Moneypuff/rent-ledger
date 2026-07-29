@@ -163,12 +163,21 @@ correct liability. If the remittances were also made on the short basis they are
 arrears by the same amount, and interest may apply — worth checking, since the RQ
 remittance is $650.70 per pay against the $274.10 the same wrong basis would suggest.
 
-To recover it over the 11 remaining pays: an extra $310.30 on each of the next 10 and
-$310.25 on the last, taking net pay to $1,434.41 then $1,434.46. That restores the
-correct annual net of $45,362.46 exactly. Confirm with your accountant first.
+**The recovery is applied from 2026-08-07.** An extra $310.30 is withheld on pays
+#16–#25 and $310.25 on pay #26, taking net pay from $1,744.71 down to **$1,434.41**,
+then $1,434.46 on the last. It appears on those stubs as a separate
+**Prior-period adjustment** line rather than being folded into a statutory deduction,
+with the outstanding balance shown after each instalment. The eleven instalments sum
+to $3,413.25 exactly and the year closes on the correct annual net of $45,362.46.
+
+| Pays | Net | Basis |
+|---|---|---|
+| #1–#15 · Jan 9 – Jul 24 | $1,972.26 | Federal calculator only — under-withheld |
+| #16–#25 · Aug 7 – Dec 11 | $1,434.41 | Correct + $310.30 arrears instalment |
+| #26 · Dec 25 | $1,434.46 | Correct + $310.25 final instalment |
 
 The Settings panel has a **Clerical correction** block recording what was really
-withheld; set the period count to 0 when there is nothing to restate.
+withheld and when recovery starts; set either period count to 0 to switch it off.
 
 ### The rest
 

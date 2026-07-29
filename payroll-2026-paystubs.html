@@ -5,6 +5,7 @@
     --ink:#171C15; --ink-mid:#3E4A3A; --ink-mute:#5D6858; --ink-faint:#8B9584;
     --rule:#CFD9CB; --rule-firm:#B3C0AE;
     --bad:#9E2B20; --bad-wash:#F8E4E0; --bad-edge:#D08A80;
+    --adj:#7A5A12; --adj-wash:#FBF0DC; --adj-edge:#C9A24A;
     --ok:#2E6B45;
     --shadow:0 1px 0 rgba(23,28,21,.04), 0 6px 20px -12px rgba(23,28,21,.28);
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
@@ -14,18 +15,21 @@
     :root{ --stock:#10130E; --sheet:#191D16; --sunk:#141812;
       --ink:#E8EDE3; --ink-mid:#BCC6B6; --ink-mute:#9AA593; --ink-faint:#6F7A69;
       --rule:#2C3327; --rule-firm:#3D4636;
-      --bad:#E58274; --bad-wash:#331915; --bad-edge:#7E3A30; --ok:#6FBE8A;
+      --bad:#E58274; --bad-wash:#331915; --bad-edge:#7E3A30;
+      --adj:#E3C46E; --adj-wash:#2E2712; --adj-edge:#8A6F24; --ok:#6FBE8A;
       --shadow:0 1px 0 rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.8); }
   }
   :root[data-theme="dark"]{ --stock:#10130E; --sheet:#191D16; --sunk:#141812;
     --ink:#E8EDE3; --ink-mid:#BCC6B6; --ink-mute:#9AA593; --ink-faint:#6F7A69;
     --rule:#2C3327; --rule-firm:#3D4636;
-    --bad:#E58274; --bad-wash:#331915; --bad-edge:#7E3A30; --ok:#6FBE8A;
+    --bad:#E58274; --bad-wash:#331915; --bad-edge:#7E3A30;
+    --adj:#E3C46E; --adj-wash:#2E2712; --adj-edge:#8A6F24; --ok:#6FBE8A;
     --shadow:0 1px 0 rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.8); }
   :root[data-theme="light"]{ --stock:#EAEFE8; --sheet:#FCFDFB; --sunk:#E2E9DF;
     --ink:#171C15; --ink-mid:#3E4A3A; --ink-mute:#5D6858; --ink-faint:#8B9584;
     --rule:#CFD9CB; --rule-firm:#B3C0AE;
-    --bad:#9E2B20; --bad-wash:#F8E4E0; --bad-edge:#D08A80; --ok:#2E6B45;
+    --bad:#9E2B20; --bad-wash:#F8E4E0; --bad-edge:#D08A80;
+    --adj:#7A5A12; --adj-wash:#FBF0DC; --adj-edge:#C9A24A; --ok:#2E6B45;
     --shadow:0 1px 0 rgba(23,28,21,.04), 0 6px 20px -12px rgba(23,28,21,.28); }
 
   *{box-sizing:border-box;}
@@ -47,6 +51,7 @@
   .tally dt{ font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); }
   .tally dd{ margin:3px 0 0; font-family:var(--mono); font-size:16px; font-weight:600; }
   .tally dd.bad{ color:var(--bad); }
+  .tally dd.adj{ color:var(--adj); }
 
   .alert{ border:2px solid var(--bad); background:var(--bad-wash); border-radius:3px;
           padding:16px 18px; margin-bottom:28px; }
@@ -96,6 +101,13 @@
   .net .val{ font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:26px; font-weight:700; }
   .stub.restated .net .val{ color:var(--bad); }
 
+  .stub.adjusted{ border-left:4px solid var(--adj); }
+  .stamp.adj{ color:var(--adj); border-color:var(--adj); }
+  table.lines tr.adj td{ color:var(--adj); font-weight:700; }
+  .ast2{ color:var(--adj); }
+  .adjnote{ margin-top:14px; padding:11px 13px; border:1px solid var(--adj-edge); background:var(--adj-wash);
+    border-radius:3px; font-size:12.5px; line-height:1.5; color:var(--ink-mid); }
+  .adjnote b{ color:var(--adj); }
   .warn{ margin-top:14px; padding:11px 13px; border:1px solid var(--bad-edge); background:var(--bad-wash);
     border-radius:3px; font-size:12.5px; line-height:1.5; color:var(--ink-mid); }
   .warn b{ color:var(--bad); }
@@ -124,16 +136,18 @@
   <span class="eyebrow">Paystubs · 2026 · Biweekly · Québec</span>
   <h1>All 26 pay periods, as paid</h1>
   <p class="lede">One statement per pay date, 2026-01-09 through 2026-12-25. Each stub
-    shows the amounts <strong>actually withheld</strong> — the first 15 were run on a
-    basis that omitted two deductions, and are marked rather than quietly corrected. A paystub records
-    a payment that happened; restating it with the right figures would misrepresent it.</p>
+    shows the amounts <strong>actually withheld</strong>. Pays #1&ndash;#15 were run on
+    a basis that omitted two deductions and are marked rather than quietly corrected — a paystub records
+    a payment that happened, and restating it with the right figures would misrepresent it. The shortfall
+    is recovered across pays #16&ndash;#26, from
+    2026-08-07 onward.</p>
 
   <dl class="tally">
     <div><dt>Gross per pay</dt><dd>$2,310.00</dd></div>
     <div><dt>Net — pays 1–15</dt><dd class="bad">$1,972.26</dd></div>
-    <div><dt>Net — pays 16–26</dt><dd>$1,744.71</dd></div>
-    <div><dt>Total paid out</dt><dd>$48,775.71</dd></div>
+    <div><dt>Net — pays 16–26</dt><dd class="adj">$1,434.41</dd></div>
     <div><dt>Under-withheld</dt><dd class="bad">$3,413.25</dd></div>
+    <div><dt>Recovered by year end</dt><dd class="adj">$3,413.25</dd></div>
   </dl>
 </header>
 
@@ -152,10 +166,12 @@
       withheld is owed to Revenu Québec whether or not it actually was — $650.70 per pay,
       $16,918.20 for the year. If the remittances were also made on the short basis, they are in
       arrears by the same amount and interest may apply.</li>
-    <li>To recover it across the 11 remaining pays, withhold an extra $310.30 on each
-      of the next 10 and $310.25 on the last — taking net pay to
-      $1,434.41, then $1,434.46. That restores the correct
-      annual net of $45,362.46 exactly. Confirm the approach with your accountant first.</li>
+    <li><strong>The recovery is applied from 2026-08-07.</strong> An extra $310.30 is
+      withheld on pays #16&ndash;#25 and $310.25 on
+      pay #26, taking net pay from $1,744.71 down to
+      $1,434.41, then $1,434.46 on the last. The instalments
+      sum to $3,413.25 exactly and the year closes on the correct annual net of
+      $45,362.46.</li>
   </ul>
 </div>
 
@@ -236,6 +252,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">337.74</td></tr>
           </tbody>
         </table>
@@ -255,6 +272,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -341,6 +360,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">675.48</td></tr>
           </tbody>
         </table>
@@ -360,6 +380,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -446,6 +468,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">1,013.22</td></tr>
           </tbody>
         </table>
@@ -465,6 +488,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -551,6 +576,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">1,350.96</td></tr>
           </tbody>
         </table>
@@ -570,6 +596,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -656,6 +684,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">1,688.70</td></tr>
           </tbody>
         </table>
@@ -675,6 +704,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -761,6 +792,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">2,026.44</td></tr>
           </tbody>
         </table>
@@ -780,6 +812,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -866,6 +900,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">2,364.18</td></tr>
           </tbody>
         </table>
@@ -885,6 +920,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -971,6 +1008,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">2,701.92</td></tr>
           </tbody>
         </table>
@@ -990,6 +1028,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -1076,6 +1116,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">3,039.66</td></tr>
           </tbody>
         </table>
@@ -1095,6 +1136,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -1181,6 +1224,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">3,377.40</td></tr>
           </tbody>
         </table>
@@ -1200,6 +1244,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -1286,6 +1332,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">3,715.14</td></tr>
           </tbody>
         </table>
@@ -1305,6 +1352,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -1391,6 +1440,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">4,052.88</td></tr>
           </tbody>
         </table>
@@ -1410,6 +1460,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -1496,6 +1548,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">4,390.62</td></tr>
           </tbody>
         </table>
@@ -1515,6 +1568,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -1601,6 +1656,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">4,728.36</td></tr>
           </tbody>
         </table>
@@ -1620,6 +1676,8 @@
       <span class="lbl">Net pay <span class="paidas">as paid</span></span>
       <span class="val">$1,972.26</span>
     </div>
+
+    
 
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
@@ -1706,6 +1764,7 @@
             
         <tr class="flag"><td>QPIP (RQAP) <span class="ast">*</span></td>
           <td class="fig">0.00</td><td class="fig">0.00</td></tr>
+            
             <tr class="tot"><td>Total deductions</td><td class="fig">337.74</td><td class="fig">5,066.10</td></tr>
           </tbody>
         </table>
@@ -1726,6 +1785,8 @@
       <span class="val">$1,972.26</span>
     </div>
 
+    
+
     <div class="warn">
       <b>* Under-withheld by $227.55.</b> This pay was run through the CRA payroll
       calculator, which computes neither Québec income tax nor QPIP, so neither was deducted.
@@ -1738,10 +1799,10 @@
       Figures above are as actually paid, not as they should have been.</div>
   </article>
 
-<div class="divider"><h2>Correct basis</h2><div class="rule"></div>
-  <span class="count">#16–#26</span></div>
+<div class="divider"><h2>Corrected, with arrears recovery</h2><div class="rule"></div>
+  <span class="count">#16–#26 · from 2026-08-07</span></div>
 
-  <article class="stub">
+  <article class="stub adjusted">
     <div class="shead">
       <div class="who">
         <h2>9134-5777 Québec Inc.</h2>
@@ -1749,7 +1810,7 @@
         <div class="emp">Employee <b>Employee</b></div>
       </div>
       <div class="meta">
-        <div class="stamp">Statement of earnings</div>
+        <div class="stamp adj">Adjusted</div>
         <table class="mt">
           <tr><td>Pay period</td><th>#16 of 26</th></tr>
           <tr><td>Period</td><th>2026-07-25 → 2026-08-07</th></tr>
@@ -1815,7 +1876,9 @@
             
         <tr><td>QPIP (RQAP)</td>
           <td class="fig">9.93</td><td class="fig">9.93</td></tr>
-            <tr class="tot"><td>Total deductions</td><td class="fig">565.29</td><td class="fig">5,631.39</td></tr>
+            <tr class="adj"><td>Prior-period adjustment <span class="ast2">&dagger;</span></td>
+              <td class="fig">310.30</td><td class="fig">310.30</td></tr>
+            <tr class="tot"><td>Total deductions</td><td class="fig">875.59</td><td class="fig">5,941.69</td></tr>
           </tbody>
         </table>
 
@@ -1832,7 +1895,14 @@
 
     <div class="net">
       <span class="lbl">Net pay</span>
-      <span class="val">$1,744.71</span>
+      <span class="val">$1,434.41</span>
+    </div>
+
+    <div class="adjnote">
+      <b>&dagger; Includes a prior-period adjustment of $310.30.</b> Recovers Québec income
+      tax and QPIP not withheld on pays #1&ndash;#15. Regular net pay for this period
+      is $1,744.71; $3,102.95 of the $3,413.25 arrears remains outstanding
+      after this pay.
     </div>
 
     
@@ -1840,7 +1910,7 @@
     <div class="foot">Salary is a fixed amount per pay period regardless of hours worked.
       </div>
   </article>
-  <article class="stub">
+  <article class="stub adjusted">
     <div class="shead">
       <div class="who">
         <h2>9134-5777 Québec Inc.</h2>
@@ -1848,7 +1918,7 @@
         <div class="emp">Employee <b>Employee</b></div>
       </div>
       <div class="meta">
-        <div class="stamp">Statement of earnings</div>
+        <div class="stamp adj">Adjusted</div>
         <table class="mt">
           <tr><td>Pay period</td><th>#17 of 26</th></tr>
           <tr><td>Period</td><th>2026-08-08 → 2026-08-21</th></tr>
@@ -1914,7 +1984,9 @@
             
         <tr><td>QPIP (RQAP)</td>
           <td class="fig">9.93</td><td class="fig">19.86</td></tr>
-            <tr class="tot"><td>Total deductions</td><td class="fig">565.29</td><td class="fig">6,196.68</td></tr>
+            <tr class="adj"><td>Prior-period adjustment <span class="ast2">&dagger;</span></td>
+              <td class="fig">310.30</td><td class="fig">620.60</td></tr>
+            <tr class="tot"><td>Total deductions</td><td class="fig">875.59</td><td class="fig">6,817.28</td></tr>
           </tbody>
         </table>
 
@@ -1931,7 +2003,14 @@
 
     <div class="net">
       <span class="lbl">Net pay</span>
-      <span class="val">$1,744.71</span>
+      <span class="val">$1,434.41</span>
+    </div>
+
+    <div class="adjnote">
+      <b>&dagger; Includes a prior-period adjustment of $310.30.</b> Recovers Québec income
+      tax and QPIP not withheld on pays #1&ndash;#15. Regular net pay for this period
+      is $1,744.71; $2,792.65 of the $3,413.25 arrears remains outstanding
+      after this pay.
     </div>
 
     
@@ -1939,7 +2018,7 @@
     <div class="foot">Salary is a fixed amount per pay period regardless of hours worked.
       </div>
   </article>
-  <article class="stub">
+  <article class="stub adjusted">
     <div class="shead">
       <div class="who">
         <h2>9134-5777 Québec Inc.</h2>
@@ -1947,7 +2026,7 @@
         <div class="emp">Employee <b>Employee</b></div>
       </div>
       <div class="meta">
-        <div class="stamp">Statement of earnings</div>
+        <div class="stamp adj">Adjusted</div>
         <table class="mt">
           <tr><td>Pay period</td><th>#18 of 26</th></tr>
           <tr><td>Period</td><th>2026-08-22 → 2026-09-04</th></tr>
@@ -2013,7 +2092,9 @@
             
         <tr><td>QPIP (RQAP)</td>
           <td class="fig">9.93</td><td class="fig">29.79</td></tr>
-            <tr class="tot"><td>Total deductions</td><td class="fig">565.29</td><td class="fig">6,761.97</td></tr>
+            <tr class="adj"><td>Prior-period adjustment <span class="ast2">&dagger;</span></td>
+              <td class="fig">310.30</td><td class="fig">930.90</td></tr>
+            <tr class="tot"><td>Total deductions</td><td class="fig">875.59</td><td class="fig">7,692.87</td></tr>
           </tbody>
         </table>
 
@@ -2030,7 +2111,14 @@
 
     <div class="net">
       <span class="lbl">Net pay</span>
-      <span class="val">$1,744.71</span>
+      <span class="val">$1,434.41</span>
+    </div>
+
+    <div class="adjnote">
+      <b>&dagger; Includes a prior-period adjustment of $310.30.</b> Recovers Québec income
+      tax and QPIP not withheld on pays #1&ndash;#15. Regular net pay for this period
+      is $1,744.71; $2,482.35 of the $3,413.25 arrears remains outstanding
+      after this pay.
     </div>
 
     
@@ -2038,7 +2126,7 @@
     <div class="foot">Salary is a fixed amount per pay period regardless of hours worked.
       </div>
   </article>
-  <article class="stub">
+  <article class="stub adjusted">
     <div class="shead">
       <div class="who">
         <h2>9134-5777 Québec Inc.</h2>
@@ -2046,7 +2134,7 @@
         <div class="emp">Employee <b>Employee</b></div>
       </div>
       <div class="meta">
-        <div class="stamp">Statement of earnings</div>
+        <div class="stamp adj">Adjusted</div>
         <table class="mt">
           <tr><td>Pay period</td><th>#19 of 26</th></tr>
           <tr><td>Period</td><th>2026-09-05 → 2026-09-18</th></tr>
@@ -2112,7 +2200,9 @@
             
         <tr><td>QPIP (RQAP)</td>
           <td class="fig">9.93</td><td class="fig">39.72</td></tr>
-            <tr class="tot"><td>Total deductions</td><td class="fig">565.29</td><td class="fig">7,327.26</td></tr>
+            <tr class="adj"><td>Prior-period adjustment <span class="ast2">&dagger;</span></td>
+              <td class="fig">310.30</td><td class="fig">1,241.20</td></tr>
+            <tr class="tot"><td>Total deductions</td><td class="fig">875.59</td><td class="fig">8,568.46</td></tr>
           </tbody>
         </table>
 
@@ -2129,7 +2219,14 @@
 
     <div class="net">
       <span class="lbl">Net pay</span>
-      <span class="val">$1,744.71</span>
+      <span class="val">$1,434.41</span>
+    </div>
+
+    <div class="adjnote">
+      <b>&dagger; Includes a prior-period adjustment of $310.30.</b> Recovers Québec income
+      tax and QPIP not withheld on pays #1&ndash;#15. Regular net pay for this period
+      is $1,744.71; $2,172.05 of the $3,413.25 arrears remains outstanding
+      after this pay.
     </div>
 
     
@@ -2137,7 +2234,7 @@
     <div class="foot">Salary is a fixed amount per pay period regardless of hours worked.
       </div>
   </article>
-  <article class="stub">
+  <article class="stub adjusted">
     <div class="shead">
       <div class="who">
         <h2>9134-5777 Québec Inc.</h2>
@@ -2145,7 +2242,7 @@
         <div class="emp">Employee <b>Employee</b></div>
       </div>
       <div class="meta">
-        <div class="stamp">Statement of earnings</div>
+        <div class="stamp adj">Adjusted</div>
         <table class="mt">
           <tr><td>Pay period</td><th>#20 of 26</th></tr>
           <tr><td>Period</td><th>2026-09-19 → 2026-10-02</th></tr>
@@ -2211,7 +2308,9 @@
             
         <tr><td>QPIP (RQAP)</td>
           <td class="fig">9.93</td><td class="fig">49.65</td></tr>
-            <tr class="tot"><td>Total deductions</td><td class="fig">565.29</td><td class="fig">7,892.55</td></tr>
+            <tr class="adj"><td>Prior-period adjustment <span class="ast2">&dagger;</span></td>
+              <td class="fig">310.30</td><td class="fig">1,551.50</td></tr>
+            <tr class="tot"><td>Total deductions</td><td class="fig">875.59</td><td class="fig">9,444.05</td></tr>
           </tbody>
         </table>
 
@@ -2228,7 +2327,14 @@
 
     <div class="net">
       <span class="lbl">Net pay</span>
-      <span class="val">$1,744.71</span>
+      <span class="val">$1,434.41</span>
+    </div>
+
+    <div class="adjnote">
+      <b>&dagger; Includes a prior-period adjustment of $310.30.</b> Recovers Québec income
+      tax and QPIP not withheld on pays #1&ndash;#15. Regular net pay for this period
+      is $1,744.71; $1,861.75 of the $3,413.25 arrears remains outstanding
+      after this pay.
     </div>
 
     
@@ -2236,7 +2342,7 @@
     <div class="foot">Salary is a fixed amount per pay period regardless of hours worked.
       </div>
   </article>
-  <article class="stub">
+  <article class="stub adjusted">
     <div class="shead">
       <div class="who">
         <h2>9134-5777 Québec Inc.</h2>
@@ -2244,7 +2350,7 @@
         <div class="emp">Employee <b>Employee</b></div>
       </div>
       <div class="meta">
-        <div class="stamp">Statement of earnings</div>
+        <div class="stamp adj">Adjusted</div>
         <table class="mt">
           <tr><td>Pay period</td><th>#21 of 26</th></tr>
           <tr><td>Period</td><th>2026-10-03 → 2026-10-16</th></tr>
@@ -2310,7 +2416,9 @@
             
         <tr><td>QPIP (RQAP)</td>
           <td class="fig">9.93</td><td class="fig">59.58</td></tr>
-            <tr class="tot"><td>Total deductions</td><td class="fig">565.29</td><td class="fig">8,457.84</td></tr>
+            <tr class="adj"><td>Prior-period adjustment <span class="ast2">&dagger;</span></td>
+              <td class="fig">310.30</td><td class="fig">1,861.80</td></tr>
+            <tr class="tot"><td>Total deductions</td><td class="fig">875.59</td><td class="fig">10,319.64</td></tr>
           </tbody>
         </table>
 
@@ -2327,7 +2435,14 @@
 
     <div class="net">
       <span class="lbl">Net pay</span>
-      <span class="val">$1,744.71</span>
+      <span class="val">$1,434.41</span>
+    </div>
+
+    <div class="adjnote">
+      <b>&dagger; Includes a prior-period adjustment of $310.30.</b> Recovers Québec income
+      tax and QPIP not withheld on pays #1&ndash;#15. Regular net pay for this period
+      is $1,744.71; $1,551.45 of the $3,413.25 arrears remains outstanding
+      after this pay.
     </div>
 
     
@@ -2335,7 +2450,7 @@
     <div class="foot">Salary is a fixed amount per pay period regardless of hours worked.
       </div>
   </article>
-  <article class="stub">
+  <article class="stub adjusted">
     <div class="shead">
       <div class="who">
         <h2>9134-5777 Québec Inc.</h2>
@@ -2343,7 +2458,7 @@
         <div class="emp">Employee <b>Employee</b></div>
       </div>
       <div class="meta">
-        <div class="stamp">Statement of earnings</div>
+        <div class="stamp adj">Adjusted</div>
         <table class="mt">
           <tr><td>Pay period</td><th>#22 of 26</th></tr>
           <tr><td>Period</td><th>2026-10-17 → 2026-10-30</th></tr>
@@ -2409,7 +2524,9 @@
             
         <tr><td>QPIP (RQAP)</td>
           <td class="fig">9.93</td><td class="fig">69.51</td></tr>
-            <tr class="tot"><td>Total deductions</td><td class="fig">565.29</td><td class="fig">9,023.13</td></tr>
+            <tr class="adj"><td>Prior-period adjustment <span class="ast2">&dagger;</span></td>
+              <td class="fig">310.30</td><td class="fig">2,172.10</td></tr>
+            <tr class="tot"><td>Total deductions</td><td class="fig">875.59</td><td class="fig">11,195.23</td></tr>
           </tbody>
         </table>
 
@@ -2426,7 +2543,14 @@
 
     <div class="net">
       <span class="lbl">Net pay</span>
-      <span class="val">$1,744.71</span>
+      <span class="val">$1,434.41</span>
+    </div>
+
+    <div class="adjnote">
+      <b>&dagger; Includes a prior-period adjustment of $310.30.</b> Recovers Québec income
+      tax and QPIP not withheld on pays #1&ndash;#15. Regular net pay for this period
+      is $1,744.71; $1,241.15 of the $3,413.25 arrears remains outstanding
+      after this pay.
     </div>
 
     
@@ -2434,7 +2558,7 @@
     <div class="foot">Salary is a fixed amount per pay period regardless of hours worked.
       </div>
   </article>
-  <article class="stub">
+  <article class="stub adjusted">
     <div class="shead">
       <div class="who">
         <h2>9134-5777 Québec Inc.</h2>
@@ -2442,7 +2566,7 @@
         <div class="emp">Employee <b>Employee</b></div>
       </div>
       <div class="meta">
-        <div class="stamp">Statement of earnings</div>
+        <div class="stamp adj">Adjusted</div>
         <table class="mt">
           <tr><td>Pay period</td><th>#23 of 26</th></tr>
           <tr><td>Period</td><th>2026-10-31 → 2026-11-13</th></tr>
@@ -2508,7 +2632,9 @@
             
         <tr><td>QPIP (RQAP)</td>
           <td class="fig">9.93</td><td class="fig">79.44</td></tr>
-            <tr class="tot"><td>Total deductions</td><td class="fig">565.29</td><td class="fig">9,588.42</td></tr>
+            <tr class="adj"><td>Prior-period adjustment <span class="ast2">&dagger;</span></td>
+              <td class="fig">310.30</td><td class="fig">2,482.40</td></tr>
+            <tr class="tot"><td>Total deductions</td><td class="fig">875.59</td><td class="fig">12,070.82</td></tr>
           </tbody>
         </table>
 
@@ -2525,7 +2651,14 @@
 
     <div class="net">
       <span class="lbl">Net pay</span>
-      <span class="val">$1,744.71</span>
+      <span class="val">$1,434.41</span>
+    </div>
+
+    <div class="adjnote">
+      <b>&dagger; Includes a prior-period adjustment of $310.30.</b> Recovers Québec income
+      tax and QPIP not withheld on pays #1&ndash;#15. Regular net pay for this period
+      is $1,744.71; $930.85 of the $3,413.25 arrears remains outstanding
+      after this pay.
     </div>
 
     
@@ -2533,7 +2666,7 @@
     <div class="foot">Salary is a fixed amount per pay period regardless of hours worked.
       </div>
   </article>
-  <article class="stub">
+  <article class="stub adjusted">
     <div class="shead">
       <div class="who">
         <h2>9134-5777 Québec Inc.</h2>
@@ -2541,7 +2674,7 @@
         <div class="emp">Employee <b>Employee</b></div>
       </div>
       <div class="meta">
-        <div class="stamp">Statement of earnings</div>
+        <div class="stamp adj">Adjusted</div>
         <table class="mt">
           <tr><td>Pay period</td><th>#24 of 26</th></tr>
           <tr><td>Period</td><th>2026-11-14 → 2026-11-27</th></tr>
@@ -2607,7 +2740,9 @@
             
         <tr><td>QPIP (RQAP)</td>
           <td class="fig">9.93</td><td class="fig">89.37</td></tr>
-            <tr class="tot"><td>Total deductions</td><td class="fig">565.29</td><td class="fig">10,153.71</td></tr>
+            <tr class="adj"><td>Prior-period adjustment <span class="ast2">&dagger;</span></td>
+              <td class="fig">310.30</td><td class="fig">2,792.70</td></tr>
+            <tr class="tot"><td>Total deductions</td><td class="fig">875.59</td><td class="fig">12,946.41</td></tr>
           </tbody>
         </table>
 
@@ -2624,7 +2759,14 @@
 
     <div class="net">
       <span class="lbl">Net pay</span>
-      <span class="val">$1,744.71</span>
+      <span class="val">$1,434.41</span>
+    </div>
+
+    <div class="adjnote">
+      <b>&dagger; Includes a prior-period adjustment of $310.30.</b> Recovers Québec income
+      tax and QPIP not withheld on pays #1&ndash;#15. Regular net pay for this period
+      is $1,744.71; $620.55 of the $3,413.25 arrears remains outstanding
+      after this pay.
     </div>
 
     
@@ -2632,7 +2774,7 @@
     <div class="foot">Salary is a fixed amount per pay period regardless of hours worked.
       </div>
   </article>
-  <article class="stub">
+  <article class="stub adjusted">
     <div class="shead">
       <div class="who">
         <h2>9134-5777 Québec Inc.</h2>
@@ -2640,7 +2782,7 @@
         <div class="emp">Employee <b>Employee</b></div>
       </div>
       <div class="meta">
-        <div class="stamp">Statement of earnings</div>
+        <div class="stamp adj">Adjusted</div>
         <table class="mt">
           <tr><td>Pay period</td><th>#25 of 26</th></tr>
           <tr><td>Period</td><th>2026-11-28 → 2026-12-11</th></tr>
@@ -2706,7 +2848,9 @@
             
         <tr><td>QPIP (RQAP)</td>
           <td class="fig">9.93</td><td class="fig">99.30</td></tr>
-            <tr class="tot"><td>Total deductions</td><td class="fig">565.29</td><td class="fig">10,719.00</td></tr>
+            <tr class="adj"><td>Prior-period adjustment <span class="ast2">&dagger;</span></td>
+              <td class="fig">310.30</td><td class="fig">3,103.00</td></tr>
+            <tr class="tot"><td>Total deductions</td><td class="fig">875.59</td><td class="fig">13,822.00</td></tr>
           </tbody>
         </table>
 
@@ -2723,7 +2867,14 @@
 
     <div class="net">
       <span class="lbl">Net pay</span>
-      <span class="val">$1,744.71</span>
+      <span class="val">$1,434.41</span>
+    </div>
+
+    <div class="adjnote">
+      <b>&dagger; Includes a prior-period adjustment of $310.30.</b> Recovers Québec income
+      tax and QPIP not withheld on pays #1&ndash;#15. Regular net pay for this period
+      is $1,744.71; $310.25 of the $3,413.25 arrears remains outstanding
+      after this pay.
     </div>
 
     
@@ -2731,7 +2882,7 @@
     <div class="foot">Salary is a fixed amount per pay period regardless of hours worked.
       </div>
   </article>
-  <article class="stub">
+  <article class="stub adjusted">
     <div class="shead">
       <div class="who">
         <h2>9134-5777 Québec Inc.</h2>
@@ -2739,7 +2890,7 @@
         <div class="emp">Employee <b>Employee</b></div>
       </div>
       <div class="meta">
-        <div class="stamp">Statement of earnings</div>
+        <div class="stamp adj">Adjusted</div>
         <table class="mt">
           <tr><td>Pay period</td><th>#26 of 26</th></tr>
           <tr><td>Period</td><th>2026-12-12 → 2026-12-25</th></tr>
@@ -2805,7 +2956,9 @@
             
         <tr><td>QPIP (RQAP)</td>
           <td class="fig">9.93</td><td class="fig">109.23</td></tr>
-            <tr class="tot"><td>Total deductions</td><td class="fig">565.29</td><td class="fig">11,284.29</td></tr>
+            <tr class="adj"><td>Prior-period adjustment <span class="ast2">&dagger;</span></td>
+              <td class="fig">310.25</td><td class="fig">3,413.25</td></tr>
+            <tr class="tot"><td>Total deductions</td><td class="fig">875.54</td><td class="fig">14,697.54</td></tr>
           </tbody>
         </table>
 
@@ -2822,7 +2975,14 @@
 
     <div class="net">
       <span class="lbl">Net pay</span>
-      <span class="val">$1,744.71</span>
+      <span class="val">$1,434.46</span>
+    </div>
+
+    <div class="adjnote">
+      <b>&dagger; Includes a prior-period adjustment of $310.25.</b> Recovers Québec income
+      tax and QPIP not withheld on pays #1&ndash;#15. Regular net pay for this period
+      is $1,744.71; $0.00 of the $3,413.25 arrears remains outstanding
+      after this pay.
     </div>
 
     

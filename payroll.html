@@ -372,7 +372,8 @@
       <div class="section-head"><h2>Clerical correction</h2><div class="rule"></div></div>
       <div class="card">
         <div class="field-grid">
-          <div class="field full"><label for="asPaidThroughPeriod">Periods paid on the wrong basis (1 through…)</label><input id="asPaidThroughPeriod" name="asPaidThroughPeriod" type="number" min="0" step="1"></div>
+          <div class="field"><label for="asPaidThroughPeriod">Periods paid on the wrong basis (1 through…)</label><input id="asPaidThroughPeriod" name="asPaidThroughPeriod" type="number" min="0" step="1"></div>
+          <div class="field"><label for="recoverArrearsFromPeriod">Recover arrears from period (0 = off)</label><input id="recoverArrearsFromPeriod" name="recoverArrearsFromPeriod" type="number" min="0" step="1"></div>
           <div class="field"><label for="asPaidFedTax">Federal tax actually withheld ($)</label><input id="asPaidFedTax" name="asPaidFedTax" type="number" step="0.01" min="0"></div>
           <div class="field"><label for="asPaidQcTax">Québec tax actually withheld ($)</label><input id="asPaidQcTax" name="asPaidQcTax" type="number" step="0.01" min="0"></div>
           <div class="field"><label for="asPaidQpp">QPP actually withheld ($)</label><input id="asPaidQpp" name="asPaidQpp" type="number" step="0.01" min="0"></div>
@@ -497,7 +498,12 @@ var DEFAULTS = {
   asPaidQcTax: 0,
   asPaidQpp: 137.05,
   asPaidEi: 30.03,
-  asPaidQpip: 0
+  asPaidQpip: 0,
+
+  /* Recover the under-withheld arrears by reducing net pay from this period on,
+   * spread evenly with the rounding residue carried on the final pay so the
+   * instalments sum to the arrears exactly. 0 disables the recovery. */
+  recoverArrearsFromPeriod: 16
 };
 
 /* Published 2026 maximums, used only to self-check the rates against the
@@ -523,7 +529,8 @@ var NUMERIC = ['periodEndOffsetDays','grossPerPeriod','federalTaxPerPeriod','que
   'taxBasisGross','qppRatePct','qppExemptionAnnual','ympe','qpp2RatePct','yampe',
   'eiRatePct','eiEmployerMultiplier','eiMie',
   'qpipEmployeeRatePct','qpipEmployerRatePct','qpipMax','hsfRatePct','cnesstRatePct',
-  'asPaidThroughPeriod','asPaidFedTax','asPaidQcTax','asPaidQpp','asPaidEi','asPaidQpip'];
+  'asPaidThroughPeriod','asPaidFedTax','asPaidQcTax','asPaidQpp','asPaidEi','asPaidQpip',
+  'recoverArrearsFromPeriod'];
 
 /* ── Small helpers ──────────────────────────────────────────────────────── */
 function round2(n){ return Math.round((n + Number.EPSILON) * 100) / 100; }
@@ -737,9 +744,45 @@ function buildPeriods(cfg){
       paid: paid, shortfall: shortfall, onErrorBasis: onErrorBasis,
       cra: round2(fed + ei + eiEr),
       rq: round2(qc + qpp + qpp + qpp2 + qpp2 + qpip + qpipEr + hsf + cnesst),
+      recovery: 0,
       ytd: JSON.parse(JSON.stringify(ytd))
     });
   }
+
+  /* ── Arrears recovery ──────────────────────────────────────────────────
+   * Spread the total under-withheld across the periods from
+   * recoverArrearsFromPeriod on. The last instalment carries the rounding
+   * residue so the instalments sum to the arrears to the cent rather than
+   * over- or under-recovering. This is a recovery of a prior-period
+   * shortfall, not a statutory deduction, so it gets its own line. */
+  var arrears = round2(rows.reduce(function(a, r){ return a + r.shortfall; }, 0));
+  var targets = cfg.recoverArrearsFromPeriod > 0
+    ? rows.filter(function(r){ return r.n >= cfg.recoverArrearsFromPeriod && r.shortfall === 0; })
+    : [];
+  if (arrears > 0 && targets.length){
+    var per = round2(arrears / targets.length);
+    var placed = 0;
+    targets.forEach(function(r, i){
+      var amt = i === targets.length - 1 ? round2(arrears - placed) : per;
+      placed = round2(placed + amt);
+      r.recovery = amt;
+      r.paid.ded = round2(r.paid.ded + amt);
+      r.paid.net = round2(r.gross - r.paid.ded);
+    });
+  }
+
+  /* Re-run the as-paid running totals now that recovery has moved them. */
+  var cDed = 0, cNet = 0, cRec = 0;
+  rows.forEach(function(r){
+    cDed = round2(cDed + r.paid.ded);
+    cNet = round2(cNet + r.paid.net);
+    cRec = round2(cRec + r.recovery);
+    r.ytd.paidDed = cDed;
+    r.ytd.paidNet = cNet;
+    r.ytd.recovered = cRec;
+    r.ytd.arrearsOutstanding = round2(r.ytd.shortfall - cRec);
+  });
+
   return rows;
 }
 
@@ -819,6 +862,7 @@ function correctionHtml(){
      pay rather than over- or under-recovering by a few cents. */
   var perPay = remaining > 0 ? round2(last.shortfall / remaining) : 0;
   var finalPay = remaining > 0 ? round2(last.shortfall - perPay * (remaining - 1)) : 0;
+  var recovering = periods.filter(function(r){ return r.recovery > 0; });
 
   return '<div class="note stop">'
     + '<strong>' + hit.length + ' pay ' + (hit.length === 1 ? 'period was' : 'periods were')
@@ -835,13 +879,21 @@ function correctionHtml(){
     + 'should have been withheld, whether or not it actually was, so the ledger already reflects the '
     + 'correct liability. If those remittances were also made on the short basis, the arrears are the '
     + 'same ' + money(last.shortfall) + ' and interest may apply.</li>'
-    + (remaining > 0
-        ? '<li>To recover it over the ' + remaining + ' remaining pays, withhold an extra '
-          + money(perPay) + ' on each of the next ' + (remaining - 1) + ' and '
-          + money(finalPay) + ' on the last — net pay of ' + money(round2(hit[0].net - perPay))
-          + ', then ' + money(round2(hit[0].net - finalPay)) + '. '
-          + 'Confirm the approach with your accountant before applying it.</li>'
-        : '<li>No pay periods remain this year to recover it from — settle it with your accountant.</li>')
+    + (recovering.length
+        ? '<li><b>Recovery is applied.</b> An extra ' + money(recovering[0].recovery)
+          + ' is withheld on each of pays #' + recovering[0].n + '–#'
+          + recovering[recovering.length - 2].n + ' and '
+          + money(recovering[recovering.length - 1].recovery) + ' on pay #'
+          + recovering[recovering.length - 1].n + ', taking net pay to '
+          + money(recovering[0].paid.net) + ' and then '
+          + money(recovering[recovering.length - 1].paid.net) + '. The instalments sum to '
+          + money(last.recovered) + ', clearing the arrears exactly and restoring the correct '
+          + 'annual net of ' + money(last.net) + '.</li>'
+        : (remaining > 0
+            ? '<li>To recover it over the ' + remaining + ' remaining pays, withhold an extra '
+              + money(perPay) + ' on each of the next ' + (remaining - 1) + ' and '
+              + money(finalPay) + ' on the last. Set the recovery start period in Settings to apply it.</li>'
+            : '<li>No pay periods remain this year to recover it from — settle it with your accountant.</li>'))
     + '</ul></div>';
 }
 
@@ -1013,6 +1065,9 @@ function stubHtml(r){
     ['EI', p.ei, r.ytd.ei, false],
     ['QPIP (RQAP)', p.qpip, round2(r.ytd.qpip - r.ytd.shortQpip), r.shortfall > 0]
   ];
+  if (r.recovery > 0){
+    deductionLines.push(['Prior-period adjustment', r.recovery, r.ytd.recovered, false]);
+  }
   var employerLines = [
     ['QPP — employer', r.qppEr, r.ytd.qppEr, false],
     ['QPP2 — employer', r.qpp2Er, r.ytd.qpp2Er, false],
@@ -1066,6 +1121,14 @@ function stubHtml(r){
     + '</div>'
 
     + '<div class="net"><span class="lbl">Net pay</span><span class="val">' + money(p.net) + '</span></div>'
+    + (r.recovery > 0
+        ? '<div class="draft" style="background:var(--warn-soft);color:var(--warn);border-color:var(--warn);">'
+          + '<b>Includes a prior-period adjustment of ' + money(r.recovery) + '.</b> '
+          + 'Recovers Québec income tax and QPIP that were not withheld on pays #1–#'
+          + cfg.asPaidThroughPeriod + '. Regular net pay is ' + money(r.net) + '; '
+          + money(r.ytd.arrearsOutstanding) + ' of the ' + money(r.ytd.shortfall)
+          + ' arrears remains outstanding after this pay.</div>'
+        : '')
     + (r.shortfall > 0
         ? '<div class="draft"><b>Restated — under-withheld by ' + money(r.shortfall) + '.</b> '
           + 'This pay was calculated with the CRA payroll calculator, which does not compute Québec '
