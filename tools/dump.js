@@ -1,5 +1,5 @@
 const fs=require('fs'),vm=require('vm');
-const src=fs.readFileSync('/home/user/rent-ledger/payroll.html','utf8').match(/<script>([\s\S]*)<\/script>/)[1];
+const src=fs.readFileSync(require('path').join(__dirname,'..','payroll.html'),'utf8').match(/<script>([\s\S]*)<\/script>/)[1];
 const mk=()=>({innerHTML:'',textContent:'',value:'',dataset:{},classList:{toggle(){},add(){},remove(){}},elements:new Proxy({},{get:()=>({value:''})}),addEventListener(){},querySelectorAll:()=>[]});
 const sb={console,localStorage:{getItem:()=>null,setItem(){},removeItem(){}},document:{getElementById:mk,querySelector:mk,querySelectorAll:()=>[],addEventListener(){},createElement:mk,body:{appendChild(){},removeChild(){},classList:{add(){},remove(){}}}},window:{scrollTo(){},print(){}},Blob:function(){},URL:{createObjectURL:()=>'',revokeObjectURL(){}},setTimeout};
 sb.globalThis=sb;vm.createContext(sb);vm.runInContext(src,sb);
@@ -34,6 +34,6 @@ const out={
    shortQpip:rows[rows.length-1].ytd.shortQpip,
    er:round2(sum('qppEr')+sum('eiEr')+sum('qpipEr')+sum('hsf')+sum('cnesst'))}
 };
-fs.writeFileSync('data.json',JSON.stringify(out,null,1));
+fs.writeFileSync(require('path').join(__dirname,'data.json'),JSON.stringify(out,null,1));
 console.log('perPay',JSON.stringify(out.perPay));
 console.log('totals',JSON.stringify(out.totals));

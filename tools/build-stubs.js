@@ -356,7 +356,7 @@ ${clean.map(stub).join('')}
 </div>
 `;
 
-fs.writeFileSync('/home/user/rent-ledger/payroll-2026-paystubs.html', html);
+fs.writeFileSync(require('path').join(__dirname,'..','payroll-2026-paystubs.html'), html);
 console.log('written', (html.length / 1024).toFixed(0) + 'KB ·', P.length, 'stubs (', restated.length, 'restated,', recov.length, 'adjusted )');
 console.log('employee:', EMPLOYEE, '| employer:', EMPLOYER.name);
 console.log('paid out', t.paidNet, '| correct', t.net);

@@ -617,7 +617,7 @@ ${FONTS}
 </div>
 `;
 
-fs.writeFileSync('/home/user/rent-ledger/payroll-2026-remittances.html', html);
+fs.writeFileSync(require('path').join(__dirname,'..','payroll-2026-remittances.html'), html);
 console.log('written', html.length, 'bytes');
 console.log('ties: ee+er', (t.ded + t.er).toFixed(2), '| cra+rq', bothYear.toFixed(2),
   '| net+ded', (t.net + t.ded).toFixed(2), '| gross', t.gross.toFixed(2));
