@@ -11,6 +11,12 @@ There's no "reset" step: each calendar month is just a fresh set of blank
 rows, computed automatically from today's date. Past months stay in the
 History tab forever.
 
+Use the ‹ › arrows next to the month pill to step back to an earlier month —
+handy for recording a payment that arrived after the month rolled over, or
+fixing a past entry (corrections are appended to the log, never overwritten).
+Any month you're viewing can be exported as CSV from the bottom of the
+Collect tab.
+
 ## One-time setup
 
 ### 1. Create the Google Sheet + backend
