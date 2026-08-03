@@ -179,9 +179,29 @@ function doPost(e) {
   }
 }
 
-/** Run once from the editor after pasting this file. */
+/**
+ * One-time migration for sheets created before Month/DatePaid were stored as
+ * plain text: Sheets coerced those appended strings into Dates. Reads the
+ * current values, switches the columns to text format, then writes the
+ * values back as normalized strings. Safe to re-run (no-op once clean).
+ */
+function fixCollectionsDateColumns_(sheet) {
+  var lastRow = sheet.getLastRow();
+  [COL_MONTH, COL_DATE_PAID].forEach(function (col) {
+    var normalize = col === COL_MONTH ? monthKeyOf_ : dateStrOf_;
+    var range = lastRow > 1 ? sheet.getRange(2, col, lastRow - 1, 1) : null;
+    // Read before formatting: once a Date cell is text-formatted it shows a
+    // raw serial number, so capture the real values first.
+    var values = range ? range.getValues().map(function (row) { return [normalize(row[0])]; }) : null;
+    sheet.getRange(1, col, sheet.getMaxRows(), 1).setNumberFormat('@');
+    if (range) range.setValues(values);
+  });
+}
+
+/** Run once from the editor after pasting this file. Safe to re-run. */
 function setup() {
-  ensureSheets_();
+  var sheets = ensureSheets_();
+  fixCollectionsDateColumns_(sheets.collections);
   var props = PropertiesService.getScriptProperties();
   if (!props.getProperty('SHARED_SECRET')) {
     props.setProperty('SHARED_SECRET', Utilities.getUuid());
