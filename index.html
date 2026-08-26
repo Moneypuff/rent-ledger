@@ -108,10 +108,12 @@
   .status-select.st-partial, .status-select.st-late{ color:var(--warn); border-color:var(--warn); }
   .status-select.st-unpaid{ color:var(--bad); border-color:var(--bad); }
 
-  .save-row{ display:flex; justify-content:flex-end; margin-top:8px; }
+  .save-row{ display:flex; justify-content:flex-end; align-items:center; gap:12px; margin-top:12px; }
   .save-state{ font-size:0.74rem; color:var(--ink-faint); display:flex; align-items:center; gap:5px; }
   .save-state.saved{ color:var(--good); }
+  .save-state.dirty{ color:var(--warn); }
   .save-state.error{ color:var(--bad); }
+  .save-btn[disabled]{ opacity:0.6; cursor:default; }
 
   .btn{ font-size:0.88rem; font-weight:600; border-radius:8px; padding:10px 16px; border:1px solid var(--line-strong); background:var(--paper-raised); color:var(--ink); cursor:pointer; }
   .btn:hover{ border-color:var(--accent); }
@@ -241,7 +243,7 @@
 
   var latestData = null;
   var rowState = {}; // key -> {collected, datePaid, method, status, statusManual, comment}
-  var saveTimers = {};
+  var dirtyKeys = {}; // key -> true while there are unsaved edits
 
   function keyFor(name, unit){ return name + "::" + unit; }
 
@@ -318,7 +320,8 @@
           '<div class="field full"><label>Comment — reason for late / partial / non-payment</label>' +
             '<textarea class="in-comment" placeholder="Optional note, e.g. tenant reported layoff, promised payment by the 15th...">' + escapeHtml(r.comment||"") + '</textarea></div>' +
         '</div>' +
-        '<div class="save-row"><span class="save-state" data-key="' + encodeURIComponent(key) + '"></span></div>' +
+        '<div class="save-row"><span class="save-state" data-key="' + encodeURIComponent(key) + '"></span>' +
+          '<button class="btn small primary save-btn" data-key="' + encodeURIComponent(key) + '">Save</button></div>' +
       '</div>'
     );
   }
@@ -421,6 +424,7 @@
 
   function initRowState(){
     rowState = {};
+    dirtyKeys = {};
     (latestData.tenants||[]).forEach(function(t){
       var key = keyFor(t.name, t.unit);
       var existing = (latestData.current||[]).find(function(r){ return r.Name===t.name && r.Unit===t.unit; });
@@ -461,31 +465,40 @@
     el.textContent = text || "";
   }
 
-  function scheduleSave(key, immediate){
+  function markDirty(key){
+    dirtyKeys[key] = true;
+    setSaveState(key, "dirty", "Unsaved changes");
+  }
+
+  async function saveRow(key){
     var t = latestData.tenants.find(function(x){ return keyFor(x.name,x.unit) === key; });
     if(!t) return;
-    var doSave = async function(){
-      setSaveState(key, "", "Saving…");
-      try{
-        await apiPost({
-          name: t.name, unit: t.unit, month: latestData.month,
-          collected: rowState[key].collected, datePaid: rowState[key].datePaid,
-          method: rowState[key].method, status: rowState[key].status, comment: rowState[key].comment
-        });
-        setSaveState(key, "saved", "Saved " + new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}));
-      }catch(err){
-        setSaveState(key, "error", "Couldn't save — tap to retry");
-      }
-    };
-    clearTimeout(saveTimers[key]);
-    if(immediate){ doSave(); } else { saveTimers[key] = setTimeout(doSave, 800); }
+    var btn = document.querySelector('.save-btn[data-key="' + CSS.escape(encodeURIComponent(key)) + '"]');
+    if(btn) btn.disabled = true;
+    setSaveState(key, "", "Saving…");
+    try{
+      await apiPost({
+        name: t.name, unit: t.unit, month: latestData.month,
+        collected: rowState[key].collected, datePaid: rowState[key].datePaid,
+        method: rowState[key].method, status: rowState[key].status, comment: rowState[key].comment
+      });
+      delete dirtyKeys[key];
+      setSaveState(key, "saved", "Saved " + new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}));
+    }catch(err){
+      setSaveState(key, "error", "Couldn't save — tap Save to retry");
+    }finally{
+      if(btn) btn.disabled = false;
+    }
   }
 
   document.addEventListener("click", function(e){
-    if(e.target.classList.contains("save-state") && e.target.classList.contains("error")){
-      var key = decodeURIComponent(e.target.dataset.key);
-      scheduleSave(key, true);
+    if(e.target.classList.contains("save-btn")){
+      saveRow(decodeURIComponent(e.target.dataset.key));
     }
+  });
+
+  window.addEventListener("beforeunload", function(e){
+    if(Object.keys(dirtyKeys).length){ e.preventDefault(); e.returnValue = ""; }
   });
 
   document.addEventListener("input", function(e){
@@ -503,9 +516,9 @@
         sel.value = r.status; sel.className = "in-status status-select st-" + r.status;
       }
       renderCollectStatsOnly();
-      scheduleSave(key, false);
+      markDirty(key);
     } else if(e.target.classList.contains("in-comment")){
-      r.comment = e.target.value; scheduleSave(key, false);
+      r.comment = e.target.value; markDirty(key);
     }
   });
 
@@ -516,14 +529,14 @@
     var r = rowState[key];
     if(!r) return;
     if(e.target.classList.contains("in-date")){
-      r.datePaid = e.target.value; scheduleSave(key, true);
+      r.datePaid = e.target.value; markDirty(key);
     } else if(e.target.classList.contains("in-method")){
-      r.method = e.target.value; scheduleSave(key, true);
+      r.method = e.target.value; markDirty(key);
     } else if(e.target.classList.contains("in-status")){
       r.status = e.target.value; r.statusManual = true;
       e.target.className = "in-status status-select st-" + r.status;
       renderCollectStatsOnly();
-      scheduleSave(key, true);
+      markDirty(key);
     }
   });
 

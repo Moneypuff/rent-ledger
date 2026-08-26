@@ -55,6 +55,12 @@ function currentMonthKey_() {
   return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
 }
 
+/** Sheets sometimes parses "2026-08" into a Date; normalize either form back to "YYYY-MM". */
+function monthKeyOf_(v) {
+  if (v instanceof Date) return v.getFullYear() + '-' + ('0' + (v.getMonth() + 1)).slice(-2);
+  return String(v);
+}
+
 function jsonOut_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
@@ -87,15 +93,16 @@ function doGet(e) {
     var collRows = sheetToObjects_(sheets.collections);
     var latest = {};
     collRows.forEach(function (r) {
-      var key = r.Month + '::' + r.Name + '::' + r.Unit;
+      var key = monthKeyOf_(r.Month) + '::' + r.Name + '::' + r.Unit;
       if (!latest[key] || new Date(r.Timestamp) >= new Date(latest[key].Timestamp)) latest[key] = r;
     });
 
     var byMonth = {};
     Object.keys(latest).forEach(function (key) {
       var r = latest[key];
-      if (!byMonth[r.Month]) byMonth[r.Month] = [];
-      byMonth[r.Month].push(r);
+      var mk = monthKeyOf_(r.Month);
+      if (!byMonth[mk]) byMonth[mk] = [];
+      byMonth[mk].push(r);
     });
 
     var history = Object.keys(byMonth)
@@ -119,24 +126,70 @@ function doPost(e) {
     var body = JSON.parse(e.postData.contents);
     if (body.token !== getSecret_()) return jsonOut_({ error: 'unauthorized' });
 
-    var sheets = ensureSheets_();
-    var tenantRows = sheetToObjects_(sheets.tenants);
-    var tenant = tenantRows.find(function (t) { return t.Name === body.name && t.Unit === body.unit; });
-    if (!tenant) return jsonOut_({ error: 'unknown tenant' });
+    var lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+      var sheets = ensureSheets_();
+      var tenantRows = sheetToObjects_(sheets.tenants);
+      var tenant = tenantRows.find(function (t) { return t.Name === body.name && t.Unit === body.unit; });
+      if (!tenant) return jsonOut_({ error: 'unknown tenant' });
 
-    var expected = expectedFor_(tenant.BaseRent, tenant.TaxRatePct, tenant.Type);
+      var expected = expectedFor_(tenant.BaseRent, tenant.TaxRatePct, tenant.Type);
+      var rowValues = [
+        new Date(), body.month, tenant.Name, tenant.Unit, tenant.Type,
+        Number(tenant.BaseRent) || 0, Number(tenant.TaxRatePct) || 0, expected,
+        Number(body.collected) || 0, body.status || 'unpaid',
+        body.datePaid || '', body.method || '', body.comment || ''
+      ];
 
-    sheets.collections.appendRow([
-      new Date(), body.month, tenant.Name, tenant.Unit, tenant.Type,
-      Number(tenant.BaseRent) || 0, Number(tenant.TaxRatePct) || 0, expected,
-      Number(body.collected) || 0, body.status || 'unpaid',
-      body.datePaid || '', body.method || '', body.comment || ''
-    ]);
+      // Upsert: one Collections row per tenant per month, updated in place.
+      var values = sheets.collections.getDataRange().getValues();
+      var monthKey = monthKeyOf_(body.month);
+      var rowIndex = -1;
+      for (var i = values.length - 1; i >= 1; i--) {
+        if (monthKeyOf_(values[i][1]) === monthKey &&
+            String(values[i][2]) === String(tenant.Name) &&
+            String(values[i][3]) === String(tenant.Unit)) { rowIndex = i; break; }
+      }
+      if (rowIndex >= 0) {
+        sheets.collections.getRange(rowIndex + 1, 1, 1, rowValues.length).setValues([rowValues]);
+      } else {
+        sheets.collections.appendRow(rowValues);
+      }
 
-    return jsonOut_({ ok: true, expected: expected });
+      return jsonOut_({ ok: true, expected: expected });
+    } finally {
+      lock.releaseLock();
+    }
   } catch (err) {
     return jsonOut_({ error: String(err) });
   }
+}
+
+/**
+ * One-time cleanup for sheets that accumulated duplicates under the old
+ * append-only doPost: keeps the newest row per Month + Name + Unit and
+ * deletes the rest. Run it from the editor (Run menu), then check the log.
+ */
+function dedupeCollections() {
+  var sheet = ensureSheets_().collections;
+  var values = sheet.getDataRange().getValues();
+  var latest = {}; // Month::Name::Unit -> 0-based index of the newest row
+  for (var i = 1; i < values.length; i++) {
+    var row = values[i];
+    if (!row.some(function (c) { return c !== '' && c !== null; })) continue;
+    var key = monthKeyOf_(row[1]) + '::' + row[2] + '::' + row[3];
+    if (!(key in latest) || new Date(row[0]) >= new Date(values[latest[key]][0])) latest[key] = i;
+  }
+  var keep = {};
+  Object.keys(latest).forEach(function (k) { keep[latest[k]] = true; });
+  var removed = 0;
+  for (var j = values.length - 1; j >= 1; j--) {
+    var r = values[j];
+    if (!r.some(function (c) { return c !== '' && c !== null; })) continue;
+    if (!keep[j]) { sheet.deleteRow(j + 1); removed++; }
+  }
+  Logger.log('Removed ' + removed + ' duplicate row(s); kept ' + Object.keys(latest).length + ' entries.');
 }
 
 /** Run once from the editor after pasting this file. */
