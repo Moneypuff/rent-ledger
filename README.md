@@ -11,6 +11,12 @@ There's no "reset" step: each calendar month is just a fresh set of blank
 rows, computed automatically from today's date. Past months stay in the
 History tab forever.
 
+Use the ‹ › arrows next to the month pill to step back to an earlier month —
+handy for recording a payment that arrived after the month rolled over, or
+fixing a past entry (corrections are appended to the log, never overwritten).
+Any month you're viewing can be exported as CSV from the bottom of the
+Collect tab.
+
 ## One-time setup
 
 ### 1. Create the Google Sheet + backend
@@ -34,6 +40,14 @@ Open the GitHub Pages URL on your phone. On first load it'll ask for:
 - **Shared secret** — from step 6 above
 
 These are stored only in that browser's local storage, never committed to the repo or sent anywhere but your own Apps Script. You'll need to enter them again on any new device/browser (tap the gear icon in the top bar to view or change them later).
+
+## Updating the backend
+
+When `apps-script/Code.gs` changes in this repo, paste the new contents over
+the old ones in the Apps Script editor, save, run **`setup`** once more (it's
+safe to re-run — it keeps your existing secret and data), then go to
+**Deploy → Manage deployments**, click the pencil icon, pick **New version**,
+and deploy. The Web App URL stays the same, so the page needs no changes.
 
 ## Adding or editing tenants
 

@@ -13,9 +13,26 @@ var SHEET_COLLECTIONS = 'Collections';
 var TENANT_HEADERS = ['Name', 'Unit', 'Type', 'BaseRent', 'TaxRatePct', 'Active'];
 var COLLECTION_HEADERS = ['Timestamp', 'Month', 'Name', 'Unit', 'Type', 'BaseRent', 'TaxRatePct', 'Expected', 'Collected', 'Status', 'DatePaid', 'Method', 'Comment'];
 var SEED_UNITS = ['1560 Trepanier', '2489-2499 Jean Talon', "4239-4245 d'Herelle", '6495 Pie-IX', '7420 Iberville', '7727 14e av', '9720-9730 Jeanne-Mance'];
+var STATUSES = ['paid', 'partial', 'late', 'unpaid'];
+var COL_MONTH = COLLECTION_HEADERS.indexOf('Month') + 1;
+var COL_DATE_PAID = COLLECTION_HEADERS.indexOf('DatePaid') + 1;
 
 function getSecret_() {
   return PropertiesService.getScriptProperties().getProperty('SHARED_SECRET') || '';
+}
+
+// Sheets coerces values like "2026-08" / "2026-08-01" into Dates when they're
+// appended, so anything read back must be normalized to the string forms the
+// app compares against.
+function monthKeyOf_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM');
+  var m = String(v == null ? '' : v).trim().match(/^(\d{4})-(\d{1,2})/);
+  return m ? m[1] + '-' + ('0' + m[2]).slice(-2) : String(v == null ? '' : v).trim();
+}
+
+function dateStrOf_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  return String(v == null ? '' : v).trim();
 }
 
 function ensureSheets_() {
@@ -33,6 +50,9 @@ function ensureSheets_() {
     collections = ss.insertSheet(SHEET_COLLECTIONS);
     collections.appendRow(COLLECTION_HEADERS);
     collections.setFrozenRows(1);
+    // Keep Month / DatePaid as plain text so Sheets doesn't coerce them to Dates.
+    collections.getRange(1, COL_MONTH, collections.getMaxRows(), 1).setNumberFormat('@');
+    collections.getRange(1, COL_DATE_PAID, collections.getMaxRows(), 1).setNumberFormat('@');
   }
   return { tenants: tenants, collections: collections };
 }
@@ -81,12 +101,17 @@ function doGet(e) {
           expected: expectedFor_(t.BaseRent, t.TaxRatePct, t.Type),
           active: String(t.Active).toUpperCase() !== 'FALSE'
         };
+      })
+      .sort(function (a, b) {
+        return String(a.unit).localeCompare(String(b.unit)) || String(a.name).localeCompare(String(b.name));
       });
 
-    var month = params.month || currentMonthKey_();
+    var month = /^\d{4}-\d{2}$/.test(params.month || '') ? params.month : currentMonthKey_();
     var collRows = sheetToObjects_(sheets.collections);
     var latest = {};
     collRows.forEach(function (r) {
+      r.Month = monthKeyOf_(r.Month);
+      r.DatePaid = dateStrOf_(r.DatePaid);
       var key = r.Month + '::' + r.Name + '::' + r.Unit;
       if (!latest[key] || new Date(r.Timestamp) >= new Date(latest[key].Timestamp)) latest[key] = r;
     });
@@ -119,6 +144,15 @@ function doPost(e) {
     var body = JSON.parse(e.postData.contents);
     if (body.token !== getSecret_()) return jsonOut_({ error: 'unauthorized' });
 
+    var month = String(body.month || '');
+    if (!/^\d{4}-\d{2}$/.test(month)) return jsonOut_({ error: 'bad month (expected YYYY-MM)' });
+    var collected = Number(body.collected);
+    if (!isFinite(collected)) collected = 0;
+    var status = STATUSES.indexOf(String(body.status || '').toLowerCase()) >= 0
+      ? String(body.status).toLowerCase() : 'unpaid';
+    var datePaid = String(body.datePaid || '');
+    if (datePaid && !/^\d{4}-\d{2}-\d{2}$/.test(datePaid)) return jsonOut_({ error: 'bad datePaid (expected YYYY-MM-DD)' });
+
     var sheets = ensureSheets_();
     var tenantRows = sheetToObjects_(sheets.tenants);
     var tenant = tenantRows.find(function (t) { return t.Name === body.name && t.Unit === body.unit; });
@@ -126,12 +160,18 @@ function doPost(e) {
 
     var expected = expectedFor_(tenant.BaseRent, tenant.TaxRatePct, tenant.Type);
 
-    sheets.collections.appendRow([
-      new Date(), body.month, tenant.Name, tenant.Unit, tenant.Type,
-      Number(tenant.BaseRent) || 0, Number(tenant.TaxRatePct) || 0, expected,
-      Number(body.collected) || 0, body.status || 'unpaid',
-      body.datePaid || '', body.method || '', body.comment || ''
-    ]);
+    // Serialize concurrent saves so appendRow calls can't interleave.
+    var lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+      sheets.collections.appendRow([
+        new Date(), month, tenant.Name, tenant.Unit, tenant.Type,
+        Number(tenant.BaseRent) || 0, Number(tenant.TaxRatePct) || 0, expected,
+        collected, status, datePaid, body.method || '', body.comment || ''
+      ]);
+    } finally {
+      lock.releaseLock();
+    }
 
     return jsonOut_({ ok: true, expected: expected });
   } catch (err) {
@@ -139,9 +179,29 @@ function doPost(e) {
   }
 }
 
-/** Run once from the editor after pasting this file. */
+/**
+ * One-time migration for sheets created before Month/DatePaid were stored as
+ * plain text: Sheets coerced those appended strings into Dates. Reads the
+ * current values, switches the columns to text format, then writes the
+ * values back as normalized strings. Safe to re-run (no-op once clean).
+ */
+function fixCollectionsDateColumns_(sheet) {
+  var lastRow = sheet.getLastRow();
+  [COL_MONTH, COL_DATE_PAID].forEach(function (col) {
+    var normalize = col === COL_MONTH ? monthKeyOf_ : dateStrOf_;
+    var range = lastRow > 1 ? sheet.getRange(2, col, lastRow - 1, 1) : null;
+    // Read before formatting: once a Date cell is text-formatted it shows a
+    // raw serial number, so capture the real values first.
+    var values = range ? range.getValues().map(function (row) { return [normalize(row[0])]; }) : null;
+    sheet.getRange(1, col, sheet.getMaxRows(), 1).setNumberFormat('@');
+    if (range) range.setValues(values);
+  });
+}
+
+/** Run once from the editor after pasting this file. Safe to re-run. */
 function setup() {
-  ensureSheets_();
+  var sheets = ensureSheets_();
+  fixCollectionsDateColumns_(sheets.collections);
   var props = PropertiesService.getScriptProperties();
   if (!props.getProperty('SHARED_SECRET')) {
     props.setProperty('SHARED_SECRET', Utilities.getUuid());

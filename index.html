@@ -52,6 +52,7 @@
     display:flex; align-items:center; justify-content:center; color:var(--ink-soft); cursor:pointer;
   }
   .icon-btn svg{ width:16px; height:16px; }
+  .icon-btn:disabled{ opacity:0.35; cursor:default; }
 
   .banner{
     margin:12px 18px 0; padding:12px 14px; border-radius:var(--radius);
@@ -158,7 +159,13 @@
 <div class="topbar">
   <h1 class="brand">Rent<span class="accent-dot">·</span>Ledger</h1>
   <div class="topbar-right">
+    <button class="icon-btn" id="monthPrevBtn" title="Previous month" aria-label="Previous month">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
     <span class="month-pill" id="monthPill">—</span>
+    <button class="icon-btn" id="monthNextBtn" title="Next month" aria-label="Next month">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
     <button class="icon-btn" id="refreshBtn" title="Refresh" aria-label="Refresh">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 0 1 15.3-6.4M21 12a9 9 0 0 1-15.3 6.4"/><path d="M18 3v5h-5M6 21v-5h5"/></svg>
     </button>
@@ -227,6 +234,11 @@
     var d = new Date();
     return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
   }
+  function shiftMonth(mk, delta){
+    var parts = mk.split("-");
+    var d = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1+delta, 1);
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+  }
   function statusLabel(s){ return { paid:"Paid", partial:"Partial", late:"Late", unpaid:"Unpaid" }[s] || s; }
   function suggestStatus(expected, collected){
     if(expected <= 0) return collected > 0 ? "paid" : "unpaid";
@@ -242,6 +254,8 @@
   var latestData = null;
   var rowState = {}; // key -> {collected, datePaid, method, status, statusManual, comment}
   var saveTimers = {};
+  var viewMonth = currentMonthKey();
+  var dirtyKeys = {}; // keys with a save pending or in flight
 
   function keyFor(name, unit){ return name + "::" + unit; }
 
@@ -304,7 +318,7 @@
         '</div>' +
         '<div class="field-grid">' +
           '<div class="field"><label>Amount collected ($)</label><input type="number" step="0.01" min="0" class="in-collected" value="' + r.collected + '"></div>' +
-          '<div class="field"><label>Date paid</label><input type="date" class="in-date" value="' + (r.datePaid||"") + '"></div>' +
+          '<div class="field"><label>Date paid</label><input type="date" class="in-date" value="' + escapeHtml(r.datePaid||"") + '"></div>' +
           '<div class="field"><label>Method</label><select class="in-method">' +
             ["", "E-transfer","Cheque","Cash","Direct deposit","Other"].map(function(m){
               return '<option value="' + m + '"' + (r.method===m?" selected":"") + '>' + (m===""?"—":m) + '</option>';
@@ -357,8 +371,11 @@
         html += '<div class="section-head"><h2>Commercial</h2><div class="rule"></div><span class="count">' + commercial.length + '</span></div>';
         html += commercial.map(tenantCardHtml).join("");
       }
+      html += '<div class="btn-row"><button class="btn small" id="exportCurrentBtn">Export ' + monthLabel(latestData.month) + ' (CSV)</button></div>';
     }
     content.innerHTML = html;
+    var exportBtn = document.getElementById("exportCurrentBtn");
+    if(exportBtn) exportBtn.addEventListener("click", exportViewedMonthCsv);
   }
 
   function renderHistory(){
@@ -418,6 +435,18 @@
     });
     downloadBlob("rent-ledger-" + month + ".csv", lines.join("\n"), "text/csv");
   }
+  function exportViewedMonthCsv(){
+    var header = ["Tenant","Unit","Type","Base Rent","Tax Rate %","Expected","Collected","Outstanding","Status","Date Paid","Method","Comment"];
+    var lines = [header.join(",")];
+    (latestData.tenants||[]).forEach(function(t){
+      var r = rowState[keyFor(t.name, t.unit)] || {};
+      lines.push([
+        t.name, t.unit||"", t.type, t.baseRent, t.taxRate||0, t.expected, r.collected||0,
+        (Number(t.expected)-(Number(r.collected)||0)), statusLabel(r.status||"unpaid"), r.datePaid||"", r.method||"", r.comment||""
+      ].map(csvEscape).join(","));
+    });
+    downloadBlob("rent-ledger-" + latestData.month + ".csv", lines.join("\n"), "text/csv");
+  }
 
   function initRowState(){
     rowState = {};
@@ -437,11 +466,16 @@
 
   async function loadData(){
     if(!configured()){ showConnect(); return; }
+    flushPendingSaves();
     try{
       clearBanner();
-      var month = currentMonthKey();
-      latestData = await apiGet(month);
+      $("collectContent").innerHTML = '<div class="spinner-wrap">Loading…</div>';
+      latestData = await apiGet(viewMonth);
       $("monthPill").textContent = monthLabel(latestData.month);
+      $("monthNextBtn").disabled = viewMonth >= currentMonthKey();
+      if(viewMonth !== currentMonthKey()){
+        showBanner("info", "Viewing " + monthLabel(viewMonth) + " — entries you save here are recorded for that month.");
+      }
       initRowState();
       renderCollect();
       renderHistory();
@@ -461,24 +495,43 @@
     el.textContent = text || "";
   }
 
+  var pendingFns = {}; // key -> debounced save fn not yet run
+
+  function flushPendingSaves(){
+    Object.keys(saveTimers).forEach(function(key){ clearTimeout(saveTimers[key]); });
+    saveTimers = {};
+    Object.keys(pendingFns).forEach(function(key){
+      var fn = pendingFns[key]; delete pendingFns[key]; fn();
+    });
+  }
+
   function scheduleSave(key, immediate){
     var t = latestData.tenants.find(function(x){ return keyFor(x.name,x.unit) === key; });
     if(!t) return;
+    var month = latestData.month; // capture now — a debounced save must not follow a month switch
     var doSave = async function(){
       setSaveState(key, "", "Saving…");
       try{
         await apiPost({
-          name: t.name, unit: t.unit, month: latestData.month,
+          name: t.name, unit: t.unit, month: month,
           collected: rowState[key].collected, datePaid: rowState[key].datePaid,
           method: rowState[key].method, status: rowState[key].status, comment: rowState[key].comment
         });
+        delete dirtyKeys[key];
         setSaveState(key, "saved", "Saved " + new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}));
       }catch(err){
         setSaveState(key, "error", "Couldn't save — tap to retry");
       }
     };
+    dirtyKeys[key] = true;
     clearTimeout(saveTimers[key]);
-    if(immediate){ doSave(); } else { saveTimers[key] = setTimeout(doSave, 800); }
+    delete pendingFns[key];
+    if(immediate){
+      doSave();
+    } else {
+      pendingFns[key] = doSave;
+      saveTimers[key] = setTimeout(function(){ delete pendingFns[key]; doSave(); }, 800);
+    }
   }
 
   document.addEventListener("click", function(e){
@@ -560,6 +613,22 @@
   });
 
   $("refreshBtn").addEventListener("click", loadData);
+  $("monthPrevBtn").addEventListener("click", function(){
+    viewMonth = shiftMonth(viewMonth, -1);
+    loadData();
+  });
+  $("monthNextBtn").addEventListener("click", function(){
+    if(viewMonth >= currentMonthKey()) return;
+    viewMonth = shiftMonth(viewMonth, 1);
+    loadData();
+  });
+
+  window.addEventListener("beforeunload", function(e){
+    if(Object.keys(dirtyKeys).length){
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
 
   function showConnect(){ $("connectOverlay").classList.remove("hidden"); }
   function hideConnect(){ $("connectOverlay").classList.add("hidden"); }
